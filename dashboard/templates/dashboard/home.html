@@ -1,0 +1,51 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<h1>OpenStack Cloud Dashboard</h1>
+
+<p>
+    Welcome to the OpenStack management dashboard.
+</p>
+
+<div class="card-container">
+
+    <div class="card">
+        <h2>Instances</h2>
+
+        <p>
+            View virtual machines running in OpenStack.
+        </p>
+
+        <a href="/instances/">View Instances →</a>
+    </div>
+
+
+    <div class="card">
+        <h2>Images</h2>
+
+        <p>
+            View available virtual machine images.
+        </p>
+
+        <a href="/images/">View Images →</a>
+    </div>
+
+
+    <div class="card">
+        <h2>Networks</h2>
+
+        <p>
+            View networks available in OpenStack.
+        </p>
+
+        <a href="/networks/">View Networks →</a>
+    </div>
+
+</div>
+
+{% endblock %}

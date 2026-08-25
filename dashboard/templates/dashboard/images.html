@@ -1,0 +1,68 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Images
+{% endblock %}
+
+{% block content %}
+
+<h1>OpenStack Images</h1>
+
+<p>
+    Images available through Glance.
+</p>
+
+<table>
+
+    <thead>
+
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Visibility</th>
+            <th>ID</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for image in images %}
+
+        <tr>
+
+            <td>
+                {{ image.name }}
+            </td>
+
+            <td>
+                {{ image.status }}
+            </td>
+
+            <td>
+                {{ image.visibility }}
+            </td>
+
+            <td>
+                {{ image.id }}
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="4">
+                No images found.
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Networks
+{% endblock %}
+
+{% block content %}
+
+<h1>OpenStack Networks</h1>
+
+<p>
+    Networks managed by Neutron.
+</p>
+
+<table>
+
+    <thead>
+
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Admin State</th>
+            <th>ID</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for network in networks %}
+
+        <tr>
+
+            <td>
+                {{ network.name }}
+            </td>
+
+            <td>
+                {{ network.status }}
+            </td>
+
+            <td>
+                {% if network.is_admin_state_up %}
+                    UP
+                {% else %}
+                    DOWN
+                {% endif %}
+            </td>
+
+            <td>
+                {{ network.id }}
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="4">
+                No networks found.
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}

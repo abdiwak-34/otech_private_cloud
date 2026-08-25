@@ -1,0 +1,87 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Instances
+{% endblock %}
+
+{% block content %}
+
+<h1>OpenStack Instances</h1>
+
+<p>
+    Virtual machines managed by Nova.
+</p>
+
+<table>
+
+    <thead>
+
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>IP Address</th>
+            <th>Flavor</th>
+            <th>ID</th>
+        </tr>
+
+    </thead>
+
+    <tbody>
+
+        {% for instance in instances %}
+
+        <tr>
+
+            <td>
+                {{ instance.name }}
+            </td>
+
+            <td class="status">
+                {{ instance.status }}
+            </td>
+
+            <td>
+
+                {% if instance.addresses %}
+
+                    {% for address in instance.addresses %}
+
+                        {{ address }}{% if not forloop.last %}, {% endif %}
+
+                    {% endfor %}
+
+                {% else %}
+
+                    No IP address
+
+                {% endif %}
+
+            </td>
+
+            <td>
+                {{ instance.flavor }}
+            </td>
+
+            <td>
+                {{ instance.id }}
+            </td>
+
+        </tr>
+
+        {% empty %}
+
+        <tr>
+
+            <td colspan="5">
+                No instances found.
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+{% endblock %}
