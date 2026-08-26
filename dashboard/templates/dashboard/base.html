@@ -19,8 +19,30 @@
         }
 
         .navbar {
-            background: #1f2937;
+            background: #111827;
             padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: #d1d5db;
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            color: white;
         }
 
         .navbar a {
@@ -79,13 +101,18 @@
 
 <nav class="navbar">
 
-    <a href="/">OpenStack Dashboard</a>
+    <a href="/" class="brand">
+        ☁ OpenStack Dashboard
+    </a>
 
-    <a href="/instances/">Instances</a>
+    <div class="nav-links">
 
-    <a href="/images/">Images</a>
+        <a href="/">Dashboard</a>
+        <a href="/instances/">Instances</a>
+        <a href="/images/">Images</a>
+        <a href="/networks/">Networks</a>
 
-    <a href="/networks/">Networks</a>
+    </div>
 
 </nav>
 

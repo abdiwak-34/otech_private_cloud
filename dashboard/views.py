@@ -22,11 +22,13 @@ def instances(request):
 
         addresses = []
 
-        for network_name, network_addresses in server.addresses.items():
-            for address in network_addresses:
-                addresses.append(address.get("addr"))
+        if server.addresses:
+            for network_name, network_addresses in server.addresses.items():
+                for address in network_addresses:
+                    if address.get("addr"):
+                        addresses.append(address.get("addr"))
 
-        # Get flavor information directly from the server
+        # Get the flavor name directly from the server information
         flavor_name = "Unknown"
 
         if server.flavor:

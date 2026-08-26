@@ -1,49 +1,302 @@
 {% extends "dashboard/base.html" %}
 
 {% block title %}
-Dashboard
+OpenStack Dashboard
 {% endblock %}
 
 {% block content %}
 
-<h1>OpenStack Cloud Dashboard</h1>
+<style>
 
-<p>
-    Welcome to the OpenStack management dashboard.
-</p>
+    .hero {
+        background: linear-gradient(135deg, #1f2937, #374151);
+        color: white;
+        padding: 45px;
+        border-radius: 18px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+    }
 
-<div class="card-container">
+    .hero::after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        right: -60px;
+        top: -60px;
+    }
 
-    <div class="card">
+    .hero h1 {
+        font-size: 38px;
+        margin: 0 0 12px;
+    }
+
+    .hero p {
+        font-size: 17px;
+        color: #d1d5db;
+        max-width: 650px;
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    .hero-button {
+        display: inline-block;
+        background: white;
+        color: #1f2937;
+        padding: 12px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .section-title {
+        margin: 30px 0 18px;
+        font-size: 22px;
+    }
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 14px;
+        padding: 25px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: #eef2ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+        margin-bottom: 18px;
+    }
+
+    .dashboard-card h2 {
+        margin: 0 0 10px;
+        font-size: 21px;
+    }
+
+    .dashboard-card p {
+        color: #6b7280;
+        line-height: 1.5;
+        min-height: 48px;
+    }
+
+    .card-link {
+        display: inline-block;
+        margin-top: 15px;
+        text-decoration: none;
+        color: #2563eb;
+        font-weight: bold;
+    }
+
+    .info-section {
+        margin-top: 30px;
+        background: white;
+        border-radius: 14px;
+        padding: 25px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .info-item {
+        border-left: 3px solid #2563eb;
+        padding-left: 15px;
+    }
+
+    .info-item h3 {
+        margin: 0 0 7px;
+        font-size: 16px;
+    }
+
+    .info-item p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    @media (max-width: 800px) {
+        .dashboard-cards,
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero {
+            padding: 30px;
+        }
+
+        .hero h1 {
+            font-size: 30px;
+        }
+    }
+
+</style>
+
+
+<!-- Hero Section -->
+
+<div class="hero">
+
+    <h1>OpenStack Cloud Dashboard</h1>
+
+    <p>
+        Manage and monitor your OpenStack cloud resources
+        from one simple dashboard. View instances, images,
+        and networks through the OpenStack SDK.
+    </p>
+
+    <a href="/instances/" class="hero-button">
+        View Instances →
+    </a>
+
+</div>
+
+
+<!-- Resource Section -->
+
+<h2 class="section-title">
+    Cloud Resources
+</h2>
+
+
+<div class="dashboard-cards">
+
+
+    <!-- Instances -->
+
+    <div class="dashboard-card">
+
+        <div class="card-icon">
+            🖥️
+        </div>
+
         <h2>Instances</h2>
 
         <p>
-            View virtual machines running in OpenStack.
+            View virtual machines running in your
+            OpenStack cloud, including their status,
+            IP addresses, and flavors.
         </p>
 
-        <a href="/instances/">View Instances →</a>
+        <a href="/instances/" class="card-link">
+            View Instances →
+        </a>
+
     </div>
 
 
-    <div class="card">
+    <!-- Images -->
+
+    <div class="dashboard-card">
+
+        <div class="card-icon">
+            💿
+        </div>
+
         <h2>Images</h2>
 
         <p>
-            View available virtual machine images.
+            Browse the available images that can
+            be used to create virtual machines.
         </p>
 
-        <a href="/images/">View Images →</a>
+        <a href="/images/" class="card-link">
+            View Images →
+        </a>
+
     </div>
 
 
-    <div class="card">
+    <!-- Networks -->
+
+    <div class="dashboard-card">
+
+        <div class="card-icon">
+            🌐
+        </div>
+
         <h2>Networks</h2>
 
         <p>
-            View networks available in OpenStack.
+            View networks available in your
+            OpenStack environment and their
+            current status.
         </p>
 
-        <a href="/networks/">View Networks →</a>
+        <a href="/networks/" class="card-link">
+            View Networks →
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- Architecture Information -->
+
+<div class="info-section">
+
+    <h2>OpenStack Services</h2>
+
+    <div class="info-grid">
+
+        <div class="info-item">
+
+            <h3>Nova — Compute</h3>
+
+            <p>
+                Manages virtual machine instances
+                and their lifecycle.
+            </p>
+
+        </div>
+
+
+        <div class="info-item">
+
+            <h3>Glance — Image</h3>
+
+            <p>
+                Provides images used to create
+                virtual machines.
+            </p>
+
+        </div>
+
+
+        <div class="info-item">
+
+            <h3>Neutron — Networking</h3>
+
+            <p>
+                Provides networking for virtual
+                machines and cloud resources.
+            </p>
+
+        </div>
+
     </div>
 
 </div>
