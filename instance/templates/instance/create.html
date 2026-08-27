@@ -1,0 +1,563 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Create Instance
+{% endblock %}
+
+{% block content %}
+
+<div class="create-instance-page">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <div class="breadcrumb">
+                <a href="{% url 'instances' %}">Instances</a>
+                <span> / </span>
+                <span>Create</span>
+            </div>
+
+            <h1>Create Instance</h1>
+
+            <p>
+                Launch a new virtual machine in your OpenStack cloud.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- Error Message -->
+    {% if error %}
+
+        <div class="alert-error">
+            <div class="alert-icon">!</div>
+
+            <div>
+                <strong>Unable to create instance</strong>
+                <p>{{ error }}</p>
+            </div>
+        </div>
+
+    {% endif %}
+
+
+    <!-- Form Card -->
+    <div class="form-card">
+
+        <div class="form-card-header">
+
+            <div class="server-icon">
+                ☁
+            </div>
+
+            <div>
+                <h2>Instance Configuration</h2>
+
+                <p>
+                    Choose the resources for your virtual machine.
+                </p>
+            </div>
+
+        </div>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <!-- Instance Name -->
+            <div class="form-section">
+
+                <h3>Basic Information</h3>
+
+                <div class="form-group">
+
+                    <label for="instance-name">
+                        Instance Name
+                    </label>
+
+                    <input
+                        id="instance-name"
+                        type="text"
+                        name="name"
+                        placeholder="e.g. ubuntu-server"
+                        required
+                    >
+
+                    <small>
+                        Give your virtual machine a meaningful name.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Image -->
+            <div class="form-section">
+
+                <h3>Operating System</h3>
+
+                <div class="form-group">
+
+                    <label for="image">
+                        Image
+                    </label>
+
+                    <select
+                        id="image"
+                        name="image"
+                        required
+                    >
+
+                        <option value="">
+                            Select an image
+                        </option>
+
+                        {% for image in images %}
+
+                            <option value="{{ image.id }}">
+                                {{ image.name }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <small>
+                        Select the operating system image used to boot the instance.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Resources -->
+            <div class="form-section">
+
+                <h3>Compute Resources</h3>
+
+                <div class="form-group">
+
+                    <label for="flavor">
+                        Flavor
+                    </label>
+
+                    <select
+                        id="flavor"
+                        name="flavor"
+                        required
+                    >
+
+                        <option value="">
+                            Select a flavor
+                        </option>
+
+                        {% for flavor in flavors %}
+
+                            <option value="{{ flavor.id }}">
+                                {{ flavor.name }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <small>
+                        The flavor determines the CPU, RAM and disk resources.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Network -->
+            <div class="form-section">
+
+                <h3>Networking</h3>
+
+                <div class="form-group">
+
+                    <label for="network">
+                        Network
+                    </label>
+
+                    <select
+                        id="network"
+                        name="network"
+                        required
+                    >
+
+                        <option value="">
+                            Select a network
+                        </option>
+
+                        {% for network in networks %}
+
+                            <option value="{{ network.id }}">
+                                {{ network.name }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <small>
+                        Select the Neutron network that the instance will connect to.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Actions -->
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'instances' %}"
+                    class="cancel-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="create-button"
+                >
+                    <span>+</span>
+                    Create Instance
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .create-instance-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px 10px 50px;
+    }
+
+
+    /* Header */
+
+    .page-header {
+        margin-bottom: 25px;
+    }
+
+    .breadcrumb {
+        font-size: 14px;
+        margin-bottom: 10px;
+        color: #64748b;
+    }
+
+    .breadcrumb a {
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .page-header p {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 15px;
+    }
+
+
+    /* Error */
+
+    .alert-error {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+
+        padding: 16px 18px;
+        margin-bottom: 22px;
+
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+
+        background: #fef2f2;
+        color: #991b1b;
+    }
+
+    .alert-error p {
+        margin: 5px 0 0;
+        font-size: 14px;
+    }
+
+    .alert-icon {
+        width: 28px;
+        height: 28px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        background: #dc2626;
+        color: white;
+        font-weight: bold;
+    }
+
+
+    /* Main Card */
+
+    .form-card {
+        background: white;
+
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+
+        overflow: hidden;
+    }
+
+
+    /* Card Header */
+
+    .form-card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+
+        padding: 24px 28px;
+
+        border-bottom: 1px solid #e5e7eb;
+
+        background: #f8fafc;
+    }
+
+    .server-icon {
+        width: 48px;
+        height: 48px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 10px;
+
+        background: #dbeafe;
+        color: #2563eb;
+
+        font-size: 24px;
+    }
+
+    .form-card-header h2 {
+        margin: 0;
+        font-size: 19px;
+        color: #111827;
+    }
+
+    .form-card-header p {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    /* Form */
+
+    form {
+        padding: 28px;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section h3 {
+        margin: 0 0 18px;
+
+        font-size: 16px;
+        font-weight: 600;
+
+        color: #374151;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+
+        margin-bottom: 8px;
+
+        font-size: 14px;
+        font-weight: 600;
+
+        color: #374151;
+    }
+
+    .form-group input,
+    .form-group select {
+
+        width: 100%;
+        box-sizing: border-box;
+
+        padding: 12px 14px;
+
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+
+        background: white;
+
+        font-size: 14px;
+
+        outline: none;
+
+        transition: border 0.2s, box-shadow 0.2s;
+    }
+
+
+    .form-group input:focus,
+    .form-group select:focus {
+
+        border-color: #2563eb;
+
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+
+    .form-group small {
+
+        display: block;
+
+        margin-top: 7px;
+
+        color: #6b7280;
+
+        font-size: 12px;
+    }
+
+
+    /* Buttons */
+
+    .form-actions {
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 12px;
+
+        padding-top: 24px;
+
+        border-top: 1px solid #e5e7eb;
+    }
+
+
+    .cancel-button {
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 11px 20px;
+
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+
+        background: white;
+
+        color: #374151;
+
+        text-decoration: none;
+
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .cancel-button:hover {
+        background: #f9fafb;
+    }
+
+
+    .create-button {
+
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        gap: 7px;
+
+        padding: 11px 20px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: #2563eb;
+
+        color: white;
+
+        font-size: 14px;
+        font-weight: 600;
+
+        cursor: pointer;
+
+        text-decoration: none;
+
+        transition: background 0.2s;
+    }
+
+    .create-button:hover {
+        background: #1d4ed8;
+    }
+
+    .create-button span {
+        font-size: 18px;
+    }
+
+
+    /* Mobile */
+
+    @media (max-width: 600px) {
+
+        .create-instance-page {
+            padding: 15px 5px;
+        }
+
+        .form-card-header {
+            padding: 20px;
+        }
+
+        form {
+            padding: 20px;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .create-button,
+        .cancel-button {
+            width: 100%;
+        }
+
+    }
+
+</style>
+
+{% endblock %}

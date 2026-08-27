@@ -1,0 +1,595 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Delete Instance
+{% endblock %}
+
+{% block content %}
+
+<div class="delete-page">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{% url 'instances' %}">Instances</a>
+        <span>/</span>
+        <span>Delete</span>
+    </div>
+
+
+    <!-- Delete Card -->
+    <div class="delete-card">
+
+        <!-- Warning Icon -->
+        <div class="warning-icon">
+            !
+        </div>
+
+
+        <h1>Delete Instance?</h1>
+
+        <p class="main-message">
+            Are you sure you want to delete this virtual machine?
+        </p>
+
+
+        <!-- Instance Information -->
+        <div class="instance-info">
+
+            <div class="info-icon">
+                ▣
+            </div>
+
+            <div class="info-content">
+
+                <span class="info-label">
+                    Instance
+                </span>
+
+                <strong>
+                    {{ instance.name }}
+                </strong>
+
+                <span class="instance-id">
+                    {{ instance.id }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Warning -->
+        <div class="warning-message">
+
+            <div class="warning-small-icon">
+                !
+            </div>
+
+            <div>
+                <strong>This action cannot be undone.</strong>
+
+                <p>
+                    Deleting this instance will permanently remove
+                    the virtual machine from your OpenStack project.
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- Error -->
+        {% if error %}
+
+            <div class="error-message">
+
+                <strong>Unable to delete instance</strong>
+
+                <p>
+                    {{ error }}
+                </p>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- Actions -->
+        <form method="POST">
+
+            {% csrf_token %}
+
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'instances' %}"
+                    class="cancel-button"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="delete-button"
+                >
+                    <span>×</span>
+                    Yes, Delete Instance
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<style>
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.delete-page {
+
+    max-width: 650px;
+
+    margin: 40px auto;
+
+    padding: 0 15px;
+}
+
+
+/* =========================================================
+   BREADCRUMB
+========================================================= */
+
+.breadcrumb {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+.breadcrumb a {
+
+    color: #2563eb;
+
+    text-decoration: none;
+}
+
+
+.breadcrumb a:hover {
+
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.delete-card {
+
+    padding: 40px;
+
+    background: white;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.06);
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   WARNING ICON
+========================================================= */
+
+.warning-icon {
+
+    width: 64px;
+    height: 64px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 20px;
+
+    border-radius: 50%;
+
+    background: #fee2e2;
+
+    color: #dc2626;
+
+    font-size: 30px;
+
+    font-weight: 700;
+
+    border: 7px solid #fef2f2;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.delete-card h1 {
+
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 25px;
+
+    font-weight: 700;
+}
+
+
+.main-message {
+
+    margin: 10px 0 25px;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   INSTANCE INFORMATION
+========================================================= */
+
+.instance-info {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 15px;
+
+    margin-bottom: 18px;
+
+    text-align: left;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+}
+
+
+.info-icon {
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #dbeafe;
+
+    color: #2563eb;
+
+    font-size: 18px;
+}
+
+
+.info-content {
+
+    min-width: 0;
+}
+
+
+.info-label {
+
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    font-weight: 600;
+}
+
+
+.info-content strong {
+
+    display: block;
+
+    color: #111827;
+
+    font-size: 14px;
+}
+
+
+.instance-id {
+
+    display: block;
+
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-family: monospace;
+
+    font-size: 11px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   WARNING MESSAGE
+========================================================= */
+
+.warning-message {
+
+    display: flex;
+
+    gap: 12px;
+
+    padding: 14px;
+
+    margin-bottom: 20px;
+
+    text-align: left;
+
+    border: 1px solid #fed7aa;
+
+    border-radius: 9px;
+
+    background: #fff7ed;
+
+    color: #9a3412;
+}
+
+
+.warning-small-icon {
+
+    width: 23px;
+    height: 23px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: #f97316;
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+.warning-message strong {
+
+    font-size: 13px;
+}
+
+
+.warning-message p {
+
+    margin: 4px 0 0;
+
+    color: #9a3412;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.error-message {
+
+    padding: 14px;
+
+    margin-bottom: 20px;
+
+    text-align: left;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 9px;
+
+    background: #fef2f2;
+
+    color: #991b1b;
+}
+
+
+.error-message strong {
+
+    font-size: 13px;
+}
+
+
+.error-message p {
+
+    margin: 5px 0 0;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.form-actions {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    padding-top: 5px;
+}
+
+
+/* Cancel */
+
+.cancel-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 11px 20px;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 8px;
+
+    background: white;
+
+    color: #374151;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    transition: background 0.2s;
+}
+
+
+.cancel-button:hover {
+
+    background: #f9fafb;
+}
+
+
+/* Delete */
+
+.delete-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 11px 20px;
+
+    border: 1px solid #dc2626;
+
+    border-radius: 8px;
+
+    background: #dc2626;
+
+    color: white;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s,
+        transform 0.2s;
+}
+
+
+.delete-button:hover {
+
+    background: #b91c1c;
+
+    transform: translateY(-1px);
+}
+
+
+.delete-button span {
+
+    font-size: 18px;
+
+    line-height: 12px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .delete-page {
+
+        margin: 20px auto;
+
+    }
+
+    .delete-card {
+
+        padding: 25px 20px;
+
+    }
+
+    .form-actions {
+
+        flex-direction: column-reverse;
+
+    }
+
+    .cancel-button,
+    .delete-button {
+
+        width: 100%;
+
+        box-sizing: border-box;
+
+    }
+
+}
+
+</style>
+
+{% endblock %}

@@ -6,82 +6,904 @@ Instances
 
 {% block content %}
 
-<h1>OpenStack Instances</h1>
+<div class="instances-page">
 
-<p>
-    Virtual machines managed by Nova.
-</p>
+    <!-- Page Header -->
+    <div class="page-header">
 
-<table>
+        <div class="page-title">
 
-    <thead>
+            <div class="title-icon">
+                ☁
+            </div>
 
-        <tr>
-            <th>Name</th>
-            <th>Status</th>
-            <th>IP Address</th>
-            <th>Flavor</th>
-            <th>ID</th>
-        </tr>
+            <div>
+                <h1>OpenStack Instances</h1>
 
-    </thead>
+                <p>
+                    Manage and monitor your virtual machines.
+                </p>
+            </div>
 
-    <tbody>
+        </div>
 
-        {% for instance in instances %}
 
-        <tr>
+        <a
+            href="{% url 'instance:create' %}"
+            class="create-button"
+        >
+            <span class="plus-icon">+</span>
+            <span>Create Instance</span>
+        </a>
 
-            <td>
-                {{ instance.name }}
-            </td>
+    </div>
 
-            <td class="status">
-                {{ instance.status }}
-            </td>
 
-            <td>
+    <!-- Instance Table Card -->
+    <div class="table-card">
 
-                {% if instance.addresses %}
+        <div class="table-header">
 
-                    {% for address in instance.addresses %}
+            <div>
+                <h2>Virtual Machines</h2>
 
-                        {{ address }}{% if not forloop.last %}, {% endif %}
+                <p>
+                    Instances currently available in your OpenStack project.
+                </p>
+            </div>
+
+            <div class="instance-count">
+                {{ instances|length }} instance{{ instances|length|pluralize }}
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>IP Address</th>
+                        <th>Flavor</th>
+                        <th>ID</th>
+                        <th>Actions</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for instance in instances %}
+
+                    <tr>
+
+                        <!-- Name -->
+                        <td>
+
+                            <div class="instance-name">
+
+                                <div class="instance-icon">
+                                    ▣
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        {{ instance.name }}
+                                    </strong>
+
+                                    <small>
+                                        Virtual Machine
+                                    </small>
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- Status -->
+                        <td>
+
+                            {% if instance.status == "ACTIVE" %}
+
+                                <span class="status-badge active">
+                                    <span class="status-dot"></span>
+                                    ACTIVE
+                                </span>
+
+                            {% elif instance.status == "SHUTOFF" %}
+
+                                <span class="status-badge stopped">
+                                    <span class="status-dot"></span>
+                                    SHUTOFF
+                                </span>
+
+                            {% elif instance.status == "ERROR" %}
+
+                                <span class="status-badge error">
+                                    <span class="status-dot"></span>
+                                    ERROR
+                                </span>
+
+                            {% else %}
+
+                                <span class="status-badge">
+                                    <span class="status-dot"></span>
+                                    {{ instance.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- IP Address -->
+                        <td>
+
+                            {% if instance.addresses %}
+
+                                <div class="ip-list">
+
+                                    {% for address in instance.addresses %}
+
+                                        <span class="ip-address">
+                                            {{ address }}
+                                        </span>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            {% else %}
+
+                                <span class="no-ip">
+                                    No IP address
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Flavor -->
+                        <td>
+
+                            <span class="flavor-badge">
+                                {{ instance.flavor }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- ID -->
+                        <td>
+
+                            <span
+                                class="instance-id"
+                                title="{{ instance.id }}"
+                            >
+                                {{ instance.id|truncatechars:18 }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- Actions -->
+                        <td>
+
+                            <a
+                                href="{% url 'instance:delete' instance.id %}"
+                                class="delete-button"
+                            >
+                                <span class="delete-icon">×</span>
+                                Delete
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="6">
+
+                            <div class="empty-state">
+
+                                <div class="empty-icon">
+                                    ☁
+                                </div>
+
+                                <h3>No instances found</h3>
+
+                                <p>
+                                    You don't have any virtual machines yet.
+                                </p>
+
+                                <a
+                                    href="{% url 'instance:create' %}"
+                                    class="empty-create-button"
+                                >
+                                    + Create Your First Instance
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
 
                     {% endfor %}
 
-                {% else %}
+                </tbody>
 
-                    No IP address
+            </table>
 
-                {% endif %}
+        </div>
 
-            </td>
+    </div>
 
-            <td>
-                {{ instance.flavor }}
-            </td>
+</div>
 
-            <td>
-                {{ instance.id }}
-            </td>
 
-        </tr>
+<style>
 
-        {% empty %}
+/* =========================================================
+   PAGE
+========================================================= */
 
-        <tr>
+.instances-page {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
 
-            <td colspan="5">
-                No instances found.
-            </td>
 
-        </tr>
+/* =========================================================
+   HEADER
+========================================================= */
 
-        {% endfor %}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-    </tbody>
+    margin-bottom: 25px;
+}
 
-</table>
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+
+.title-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #dbeafe;
+    color: #2563eb;
+
+    font-size: 23px;
+}
+
+
+.page-title h1 {
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 28px;
+    font-weight: 700;
+}
+
+
+.page-title p {
+    margin: 5px 0 0;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+========================================================= */
+
+.create-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 12px 19px;
+
+    border-radius: 9px;
+
+    background: #2563eb;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+
+    transition:
+        transform 0.2s,
+        background 0.2s,
+        box-shadow 0.2s;
+}
+
+
+.create-button:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3);
+}
+
+
+.plus-icon {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 20px;
+    height: 20px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.18);
+
+    font-size: 18px;
+    line-height: 1;
+}
+
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
+.table-card {
+
+    background: white;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 13px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.table-header {
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 20px 24px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    background: #f8fafc;
+}
+
+
+.table-header h2 {
+
+    margin: 0;
+
+    font-size: 17px;
+
+    color: #111827;
+}
+
+
+.table-header p {
+
+    margin: 4px 0 0;
+
+    font-size: 13px;
+
+    color: #6b7280;
+}
+
+
+.instance-count {
+
+    padding: 6px 11px;
+
+    border-radius: 20px;
+
+    background: #e0e7ff;
+
+    color: #3730a3;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    min-width: 850px;
+}
+
+
+thead {
+
+    background: #f9fafb;
+}
+
+
+th {
+
+    padding: 14px 20px;
+
+    text-align: left;
+
+    color: #6b7280;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.04em;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+td {
+
+    padding: 16px 20px;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    color: #374151;
+
+    font-size: 14px;
+}
+
+
+tbody tr {
+
+    transition: background 0.15s;
+}
+
+
+tbody tr:hover {
+
+    background: #f8fafc;
+}
+
+
+tbody tr:last-child td {
+
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   INSTANCE NAME
+========================================================= */
+
+.instance-name {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+.instance-icon {
+
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 17px;
+}
+
+
+.instance-name strong {
+
+    display: block;
+
+    color: #111827;
+
+    font-size: 14px;
+}
+
+
+.instance-name small {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: #9ca3af;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #f3f4f6;
+
+    color: #4b5563;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.status-badge.active {
+
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+
+.status-badge.stopped {
+
+    background: #f3f4f6;
+
+    color: #4b5563;
+}
+
+
+.status-badge.error {
+
+    background: #fee2e2;
+
+    color: #991b1b;
+}
+
+
+.status-dot {
+
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: currentColor;
+}
+
+
+/* =========================================================
+   IP ADDRESS
+========================================================= */
+
+.ip-list {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 5px;
+}
+
+
+.ip-address {
+
+    padding: 5px 8px;
+
+    border-radius: 5px;
+
+    background: #f1f5f9;
+
+    color: #334155;
+
+    font-family: monospace;
+
+    font-size: 12px;
+}
+
+
+.no-ip {
+
+    color: #9ca3af;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   FLAVOR
+========================================================= */
+
+.flavor-badge {
+
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    border-radius: 6px;
+
+    background: #f3f4f6;
+
+    color: #374151;
+
+    font-family: monospace;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   INSTANCE ID
+========================================================= */
+
+.instance-id {
+
+    display: inline-block;
+
+    max-width: 130px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: #64748b;
+
+    font-family: monospace;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   DELETE BUTTON
+========================================================= */
+
+.delete-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 7px 11px;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 7px;
+
+    background: #fff1f2;
+
+    color: #dc2626;
+
+    text-decoration: none;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    transition:
+        background 0.2s,
+        border 0.2s,
+        color 0.2s;
+}
+
+
+.delete-button:hover {
+
+    background: #fee2e2;
+
+    border-color: #fca5a5;
+
+    color: #b91c1c;
+}
+
+
+.delete-icon {
+
+    font-size: 17px;
+
+    line-height: 12px;
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state {
+
+    padding: 60px 20px;
+
+    text-align: center;
+}
+
+
+.empty-icon {
+
+    width: 55px;
+    height: 55px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 15px;
+
+    border-radius: 50%;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 24px;
+}
+
+
+.empty-state h3 {
+
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 17px;
+}
+
+
+.empty-state p {
+
+    margin: 7px 0 20px;
+
+    color: #6b7280;
+
+    font-size: 13px;
+}
+
+
+.empty-create-button {
+
+    display: inline-flex;
+
+    padding: 9px 15px;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .page-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 18px;
+    }
+
+
+    .create-button {
+
+        width: 100%;
+
+        box-sizing: border-box;
+    }
+
+
+    .table-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 12px;
+    }
+
+}
+
+</style>
 
 {% endblock %}
