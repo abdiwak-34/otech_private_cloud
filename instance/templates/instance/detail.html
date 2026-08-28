@@ -1,0 +1,1862 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+    {{ instance.name }} - Instance Details
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+.instance-page {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.instance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.back-button {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #f1f5f9;
+    color: #334155;
+
+    text-decoration: none;
+
+    font-size: 20px;
+
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    background: #e2e8f0;
+    transform: translateX(-3px);
+}
+
+.page-title h1 {
+    margin: 0;
+
+    font-size: 28px;
+    font-weight: 750;
+
+    color: #0f172a;
+}
+
+.page-title p {
+    margin: 5px 0 0;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   GENERAL BUTTONS
+   ========================================================= */
+
+.button {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 10px 15px;
+
+    border-radius: 8px;
+
+    text-decoration: none;
+
+    border: 1px solid transparent;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.button:hover {
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   PRIMARY
+   ========================================================= */
+
+.primary-button {
+    background: #2563eb;
+    color: white;
+
+    border-color: #2563eb;
+}
+
+.primary-button:hover {
+    background: #1d4ed8;
+}
+
+
+/* =========================================================
+   SECONDARY
+   ========================================================= */
+
+.secondary-button {
+    background: #f8fafc;
+    color: #334155;
+
+    border-color: #e2e8f0;
+}
+
+.secondary-button:hover {
+    background: #f1f5f9;
+}
+
+
+/* =========================================================
+   ATTACH
+   ========================================================= */
+
+.attach-button {
+    background: #ecfdf5;
+    color: #047857;
+
+    border-color: #a7f3d0;
+}
+
+.attach-button:hover {
+    background: #d1fae5;
+}
+
+
+/* =========================================================
+   DANGER
+   ========================================================= */
+
+.danger-button {
+    background: #fff1f2;
+    color: #e11d48;
+
+    border-color: #fecdd3;
+}
+
+.danger-button:hover {
+    background: #ffe4e6;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-message {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 15px 18px;
+
+    margin-bottom: 20px;
+
+    border-radius: 10px;
+
+    background: #fef2f2;
+
+    border: 1px solid #fecaca;
+
+    color: #b91c1c;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   DJANGO MESSAGES
+   ========================================================= */
+
+.messages {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 14px 18px;
+
+    border-radius: 9px;
+
+    margin-bottom: 10px;
+
+    font-size: 13px;
+
+    font-weight: 500;
+}
+
+.message.success {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #047857;
+}
+
+.message.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+.message.warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #b45309;
+}
+
+.message.info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+}
+
+
+/* =========================================================
+   INSTANCE HERO CARD
+   ========================================================= */
+
+.instance-card {
+    background: white;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 14px;
+
+    padding: 25px;
+
+    margin-bottom: 22px;
+
+    box-shadow:
+        0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.instance-card-top {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 25px;
+}
+
+.instance-identity {
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+}
+
+.server-icon {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #eff6ff;
+
+    font-size: 27px;
+}
+
+.instance-name h2 {
+    margin: 0;
+
+    font-size: 21px;
+
+    color: #0f172a;
+}
+
+.instance-name p {
+    margin: 5px 0 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 8px 13px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    text-transform: capitalize;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+}
+
+
+/* ACTIVE */
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-active .status-dot {
+    background: #22c55e;
+}
+
+
+/* SHUTOFF */
+
+.status-shutoff {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.status-shutoff .status-dot {
+    background: #64748b;
+}
+
+
+/* ERROR */
+
+.status-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.status-error .status-dot {
+    background: #ef4444;
+}
+
+
+/* OTHER */
+
+.status-other {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-other .status-dot {
+    background: #f59e0b;
+}
+
+
+/* =========================================================
+   INFORMATION GRID
+   ========================================================= */
+
+.info-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.info-item {
+    padding: 16px;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e2e8f0;
+}
+
+.info-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.03em;
+}
+
+.info-value {
+    display: block;
+
+    color: #0f172a;
+
+    font-size: 14px;
+
+    font-weight: 650;
+
+    word-break: break-word;
+}
+
+.id-value {
+    font-family: monospace;
+
+    font-size: 11px;
+
+    color: #475569;
+}
+
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.section {
+    background: white;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 14px;
+
+    margin-bottom: 22px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 3px 10px rgba(15, 23, 42, 0.035);
+}
+
+.section-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+.section-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #f1f5f9;
+
+    font-size: 18px;
+}
+
+.section-heading h2 {
+    margin: 0;
+
+    font-size: 16px;
+
+    color: #0f172a;
+}
+
+.section-heading p {
+    margin: 3px 0 0;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   NETWORK
+   ========================================================= */
+
+.network-content {
+    padding: 22px;
+}
+
+.network-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.network-card {
+    padding: 17px;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    transition: all 0.2s ease;
+}
+
+.network-card:hover {
+    border-color: #bfdbfe;
+
+    box-shadow:
+        0 4px 12px rgba(37, 99, 235, 0.07);
+}
+
+.network-label {
+    display: block;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    margin-bottom: 7px;
+
+    text-transform: uppercase;
+
+    font-weight: 600;
+}
+
+.network-address {
+    color: #0f172a;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    font-family: monospace;
+}
+
+.network-type {
+    display: inline-block;
+
+    margin-top: 7px;
+
+    padding: 4px 8px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    border-radius: 5px;
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+
+/* Floating IP */
+
+.floating-ip-card {
+    border-color: #bfdbfe;
+
+    background: #f8fbff;
+}
+
+.floating-ip-address {
+    color: #2563eb;
+}
+
+
+/* =========================================================
+   VOLUME TABLE
+   ========================================================= */
+
+.volume-wrapper {
+    overflow-x: auto;
+}
+
+.volume-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+.volume-table th {
+    padding: 13px 20px;
+
+    text-align: left;
+
+    background: #f8fafc;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.03em;
+
+    font-weight: 700;
+
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.volume-table td {
+    padding: 16px 20px;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    vertical-align: middle;
+}
+
+.volume-table tr:last-child td {
+    border-bottom: none;
+}
+
+.volume-table tr:hover {
+    background: #fafcff;
+}
+
+
+/* =========================================================
+   VOLUME NAME
+   ========================================================= */
+
+.volume-name-wrapper {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.volume-icon {
+    width: 35px;
+    height: 35px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: #eff6ff;
+
+    font-size: 16px;
+}
+
+.volume-name {
+    color: #0f172a;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   VOLUME STATUS
+   ========================================================= */
+
+.volume-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    font-size: 10px;
+
+    font-weight: 700;
+}
+
+.volume-status.available {
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+.volume-status.in-use {
+    background: #dbeafe;
+
+    color: #1d4ed8;
+}
+
+.volume-status.error {
+    background: #fee2e2;
+
+    color: #b91c1c;
+}
+
+.volume-status.other {
+    background: #fef3c7;
+
+    color: #92400e;
+}
+
+
+/* =========================================================
+   ATTACHMENT
+   ========================================================= */
+
+.attachment {
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+.attachment.attached {
+    color: #047857;
+}
+
+.attachment.not-attached {
+    color: #94a3b8;
+}
+
+
+/* =========================================================
+   VOLUME ACTIONS
+   ========================================================= */
+
+.volume-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    flex-wrap: wrap;
+}
+
+.volume-actions .button {
+    padding: 7px 10px;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+    padding: 55px 25px;
+
+    text-align: center;
+}
+
+.empty-icon {
+    width: 60px;
+    height: 60px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 15px;
+
+    border-radius: 14px;
+
+    background: #f1f5f9;
+
+    font-size: 27px;
+}
+
+.empty-state h3 {
+    margin: 0 0 6px;
+
+    color: #334155;
+
+    font-size: 16px;
+}
+
+.empty-state p {
+    margin: 0 0 18px;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   INSTANCE INFORMATION
+   ========================================================= */
+
+.additional-info {
+    padding: 22px;
+}
+
+.additional-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .info-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .network-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .additional-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .instance-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .instance-card-top {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .info-grid,
+    .network-grid,
+    .additional-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .volume-table {
+        min-width: 900px;
+    }
+
+}
+
+</style>
+
+
+<div class="instance-page">
+
+
+    <!-- =====================================================
+         PAGE HEADER
+         ===================================================== -->
+
+    <div class="instance-header">
+
+        <div class="header-left">
+
+            <a
+                href="{% url 'instances' %}"
+                class="back-button"
+                title="Back to Instances"
+            >
+                ←
+            </a>
+
+            <div class="page-title">
+
+                <h1>
+                    Instance Details
+                </h1>
+
+                <p>
+                    View and manage your OpenStack virtual machine.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DJANGO MESSAGES
+         ===================================================== -->
+
+    {% if messages %}
+
+        <div class="messages">
+
+            {% for message in messages %}
+
+                <div class="message {{ message.tags }}">
+
+                    {% if message.tags == "success" %}
+
+                        ✓
+
+                    {% elif message.tags == "error" %}
+
+                        ⚠
+
+                    {% elif message.tags == "warning" %}
+
+                        !
+
+                    {% else %}
+
+                        ℹ
+
+                    {% endif %}
+
+                    {{ message }}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
+
+    {% if error %}
+
+        <div class="error-message">
+
+            <span>⚠️</span>
+
+            <span>
+                {{ error }}
+            </span>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         INSTANCE SUMMARY
+         ===================================================== -->
+
+    {% if instance %}
+
+    <div class="instance-card">
+
+        <div class="instance-card-top">
+
+
+            <div class="instance-identity">
+
+                <div class="server-icon">
+                    🖥️
+                </div>
+
+                <div class="instance-name">
+
+                    <h2>
+                        {{ instance.name }}
+                    </h2>
+
+                    <p>
+                        OpenStack Nova Instance
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            {% if instance.status == "ACTIVE" %}
+
+                <div class="status-badge status-active">
+
+                    <span class="status-dot"></span>
+
+                    Active
+
+                </div>
+
+            {% elif instance.status == "SHUTOFF" %}
+
+                <div class="status-badge status-shutoff">
+
+                    <span class="status-dot"></span>
+
+                    Shutoff
+
+                </div>
+
+            {% elif instance.status == "ERROR" %}
+
+                <div class="status-badge status-error">
+
+                    <span class="status-dot"></span>
+
+                    Error
+
+                </div>
+
+            {% else %}
+
+                <div class="status-badge status-other">
+
+                    <span class="status-dot"></span>
+
+                    {{ instance.status }}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             INSTANCE INFORMATION
+             ================================================= -->
+
+        <div class="info-grid">
+
+
+            <div class="info-item">
+
+                <span class="info-label">
+                    Instance ID
+                </span>
+
+                <span class="info-value id-value">
+                    {{ instance.id }}
+                </span>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <span class="info-label">
+                    Flavor
+                </span>
+
+                <span class="info-value">
+
+                    {% if instance.flavor.original_name %}
+
+                        {{ instance.flavor.original_name }}
+
+                    {% elif instance.flavor.name %}
+
+                        {{ instance.flavor.name }}
+
+                    {% elif instance.flavor.id %}
+
+                        {{ instance.flavor.id }}
+
+                    {% else %}
+
+                        -
+
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <span class="info-label">
+                    Availability Zone
+                </span>
+
+                <span class="info-value">
+
+                    {{ instance.availability_zone|default:"-" }}
+
+                </span>
+
+            </div>
+
+
+            <div class="info-item">
+
+                <span class="info-label">
+                    Created
+                </span>
+
+                <span class="info-value">
+
+                    {{ instance.created|default:"-" }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         NETWORKING
+         ===================================================== -->
+
+    <div class="section">
+
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+                    🌐
+                </div>
+
+                <div>
+
+                    <h2>
+                        Networking
+                    </h2>
+
+                    <p>
+                        Network interfaces and IP addresses.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form
+                method="POST"
+                action="{% url 'instance:assign_floating_ip' instance.id %}"
+                style="display:inline;"
+            >
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="button primary-button"
+                    onclick="return confirm(
+                        'Assign a floating IP to this instance?'
+                    );"
+                >
+                    🌍 Assign Floating IP
+                </button>
+            </form>
+
+        </div>
+
+
+        <div class="network-content">
+
+            {% if network_info %}
+
+                <div class="network-grid">
+
+                    {% for network in network_info %}
+
+                        <div
+                            class="network-card
+                            {% if network.is_floating %}
+                                floating-ip-card
+                            {% endif %}"
+                        >
+
+                            <!-- NETWORK NAME -->
+
+                            <span class="network-label">
+
+                                {{ network.network_name }}
+
+                            </span>
+
+
+                            <!-- IP ADDRESS -->
+
+                            <div
+                                class="
+                                network-address
+                                {% if network.is_floating %}
+                                    floating-ip-address
+                                {% endif %}
+                                "
+                            >
+
+                                {{ network.ip_address }}
+
+                            </div>
+
+
+                            <!-- IP TYPE -->
+
+                            {% if network.is_floating %}
+
+                                <span class="network-type">
+                                    Floating IP
+                                </span>
+
+                            {% else %}
+
+                                <span class="network-type">
+                                    Fixed IP
+                                </span>
+
+                            {% endif %}
+
+
+                            <!-- IP VERSION -->
+
+                            {% if network.ip_version %}
+
+                                <span
+                                    style="
+                                        display: block;
+                                        margin-top: 8px;
+                                        color: #64748b;
+                                        font-size: 11px;
+                                    "
+                                >
+                                    IPv{{ network.ip_version }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        🌐
+                    </div>
+
+                    <h3>
+                        No Network Address
+                    </h3>
+
+                    <p>
+                        This instance currently has no IP address.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{% url 'instance:assign_floating_ip' instance.id %}"
+                        style="display:inline;"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="button primary-button"
+                            onclick="return confirm(
+                                'Assign a floating IP to this instance?'
+                            );"
+                        >
+                            🌍 Assign Floating IP
+                        </button>
+                    </form>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         STORAGE
+         ===================================================== -->
+
+    <div class="section">
+
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+                    💾
+                </div>
+
+                <div>
+
+                    <h2>
+                        Storage
+                    </h2>
+
+                    <p>
+                        Manage persistent block storage for this instance.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <a
+                href="{% url 'instance:create_volume' instance.id %}"
+                class="button primary-button"
+            >
+                ＋ Create Volume
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             VOLUMES
+             ================================================= -->
+
+        {% if volumes %}
+
+
+            <div class="volume-wrapper">
+
+                <table class="volume-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Volume
+                            </th>
+
+                            <th>
+                                Size
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Attachment
+                            </th>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for volume in volumes %}
+
+                        <tr>
+
+                            <!-- =================================
+                                VOLUME NAME
+                                ================================= -->
+
+                            <td>
+
+                                <div class="volume-name-wrapper">
+
+                                    <div class="volume-icon">
+                                        💾
+                                    </div>
+
+                                    <span class="volume-name">
+
+                                        {{ volume.name|default:"Unnamed Volume" }}
+
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- =================================
+                                SIZE
+                                ================================= -->
+
+                            <td>
+
+                                <strong>
+                                    {{ volume.size }}
+                                </strong>
+
+                                GB
+
+                            </td>
+
+
+                            <!-- =================================
+                                STATUS
+                                ================================= -->
+
+                            <td>
+
+                                {% if volume.status == "available" %}
+
+                                    <span class="volume-status available">
+                                        ● Available
+                                    </span>
+
+                                {% elif volume.status == "in-use" %}
+
+                                    <span class="volume-status in-use">
+                                        ● In Use
+                                    </span>
+
+                                {% elif volume.status == "error" %}
+
+                                    <span class="volume-status error">
+                                        ● Error
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="volume-status other">
+                                        ● {{ volume.status }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================
+                                ATTACHMENT
+                                ================================= -->
+
+                            <td>
+
+                                {% if volume.attached_to_instance %}
+
+                                    <span class="attachment attached">
+
+                                        ✓ Attached
+
+                                    </span>
+
+                                {% elif volume.status == "in-use" %}
+
+                                    <span
+                                        class="attachment"
+                                        style="color:#f59e0b;"
+                                    >
+
+                                        ⚠ Attached to another instance
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="attachment not-attached">
+
+                                        Not Attached
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================
+                                ID
+                                ================================= -->
+
+                            <td>
+
+                                <span class="id-value">
+
+                                    {{ volume.id }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- =================================
+                                ACTIONS
+                                ================================= -->
+
+                            <td>
+
+                                <div class="volume-actions">
+
+
+                                    <!-- =================================
+                                        ATTACH
+                                        ================================= -->
+
+                                    {% if volume.status == "available" %}
+
+                                        <form
+                                            method="POST"
+                                            action="{% url 'instance:attach_volume' instance.id volume.id %}"
+                                            style="display:inline;"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="button attach-button"
+                                                onclick="return confirm(
+                                                    'Attach this volume to {{ instance.name }}?'
+                                                );"
+                                            >
+
+                                                🔗 Attach
+
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+
+                                    <!-- =================================
+                                        DETACH
+                                        ================================= -->
+
+                                    {% if volume.attached_to_instance %}
+
+                                        <form
+                                            method="POST"
+                                            action="{% url 'instance:detach_volume' instance.id volume.id %}"
+                                            style="display:inline;"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="button secondary-button"
+                                                onclick="return confirm(
+                                                    'Detach this volume from {{ instance.name }}?'
+                                                );"
+                                            >
+
+                                                🔓 Detach
+
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+
+                                    <!-- =================================
+                                        DELETE
+                                        ================================= -->
+
+                                    {% if not volume.attached_to_instance and volume.status != "in-use" %}
+
+                                        <form
+                                            method="POST"
+                                            action="{% url 'instance:delete_volume' instance.id volume.id %}"
+                                            style="display:inline;"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="button danger-button"
+                                                onclick="return confirm(
+                                                    'Are you sure you want to delete this volume? This action cannot be undone.'
+                                                );"
+                                            >
+
+                                                🗑 Delete
+
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="6">
+
+                                <div class="empty-state">
+
+                                    <div class="empty-icon">
+                                        💾
+                                    </div>
+
+                                    <h3>
+                                        No Volumes
+                                    </h3>
+
+                                    <p>
+                                        There are currently no block storage volumes
+                                        available in this project.
+                                    </p>
+
+                                    <a
+                                        href="{% url 'instance:create_volume' instance.id %}"
+                                        class="button primary-button"
+                                    >
+                                        ＋ Create Volume
+                                    </a>
+
+                                </div>
+
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- =============================================
+                 EMPTY STORAGE
+                 ============================================= -->
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    💾
+                </div>
+
+                <h3>
+                    No Volumes
+                </h3>
+
+                <p>
+                    There are currently no block storage volumes
+                    available in this project.
+                </p>
+
+                <a
+                    href="{% url 'instance:create_volume' instance.id %}"
+                    class="button primary-button"
+                >
+                    ＋ Create Volume
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         INSTANCE INFORMATION
+         ===================================================== -->
+
+    <div class="section">
+
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <div class="section-icon">
+                    ℹ️
+                </div>
+
+                <div>
+
+                    <h2>
+                        Instance Information
+                    </h2>
+
+                    <p>
+                        Additional information about this virtual machine.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="additional-info">
+
+
+            <div class="additional-grid">
+
+
+                <!-- INSTANCE ID -->
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Instance ID
+                    </span>
+
+                    <span class="info-value id-value">
+
+                        {{ instance.id }}
+
+                    </span>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Status
+                    </span>
+
+                    <span class="info-value">
+
+                        {{ instance.status }}
+
+                    </span>
+
+                </div>
+
+
+                <!-- HOST -->
+
+                <div class="info-item">
+
+                    <span class="info-label">
+                        Host
+                    </span>
+
+                    <span class="info-value">
+
+                        {{ instance.host_id|default:"-" }}
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

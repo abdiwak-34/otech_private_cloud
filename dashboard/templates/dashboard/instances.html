@@ -197,13 +197,26 @@ Instances
                         <!-- Actions -->
                         <td>
 
-                            <a
-                                href="{% url 'instance:delete' instance.id %}"
-                                class="delete-button"
-                            >
-                                <span class="delete-icon">×</span>
-                                Delete
-                            </a>
+                            <div class="action-buttons">
+
+                                <!-- View Details -->
+                                <a
+                                    href="{% url 'instance:detail' instance.id %}"
+                                    class="details-button"
+                                >
+                                    <span>View</span>
+                                </a>
+
+                                <!-- Delete -->
+                                <a
+                                    href="{% url 'instance:delete' instance.id %}"
+                                    class="delete-button"
+                                >
+                                    <span class="delete-icon">×</span>
+                                    Delete
+                                </a>
+
+                            </div>
 
                         </td>
 
@@ -900,6 +913,55 @@ tbody tr:last-child td {
         flex-direction: column;
 
         gap: 12px;
+    }
+
+    /* =========================================================
+    ACTION BUTTONS
+    ========================================================= */
+
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+
+    /* =========================================================
+    DETAILS BUTTON
+    ========================================================= */
+
+    .details-button {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        padding: 7px 12px;
+
+        border: 1px solid #bfdbfe;
+        border-radius: 7px;
+
+        background: #eff6ff;
+        color: #2563eb;
+
+        text-decoration: none;
+
+        font-size: 12px;
+        font-weight: 600;
+
+        transition:
+            background 0.2s,
+            border 0.2s,
+            color 0.2s,
+            transform 0.2s;
+    }
+
+    .details-button:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+
+        transform: translateY(-1px);
     }
 
 }

@@ -8,245 +8,441 @@ OpenStack Dashboard
 
 <style>
 
-    .hero {
-        background: linear-gradient(135deg, #1f2937, #374151);
-        color: white;
-        padding: 45px;
-        border-radius: 18px;
+    .dashboard-header {
         margin-bottom: 30px;
-        position: relative;
-        overflow: hidden;
     }
 
-    .hero::after {
-        content: "";
-        position: absolute;
-        width: 220px;
-        height: 220px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.06);
-        right: -60px;
-        top: -60px;
-    }
-
-    .hero h1 {
-        font-size: 38px;
-        margin: 0 0 12px;
-    }
-
-    .hero p {
-        font-size: 17px;
-        color: #d1d5db;
-        max-width: 650px;
-        line-height: 1.6;
-        margin-bottom: 25px;
-    }
-
-    .hero-button {
-        display: inline-block;
-        background: white;
+    .dashboard-header h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
         color: #1f2937;
-        padding: 12px 20px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: bold;
     }
 
-    .section-title {
-        margin: 30px 0 18px;
-        font-size: 22px;
+    .dashboard-header p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 15px;
     }
 
-    .dashboard-cards {
+
+    /* ==============================
+       SUMMARY CARDS
+       ============================== */
+
+    .summary-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 20px;
+        margin-bottom: 35px;
     }
 
-    .dashboard-card {
+    .summary-card {
         background: white;
         border-radius: 14px;
-        padding: 25px;
+        padding: 22px;
         box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
         transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    .summary-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.11);
     }
 
-    .card-icon {
-        width: 50px;
-        height: 50px;
+    .summary-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .summary-icon {
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
         background: #eef2ff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 25px;
-        margin-bottom: 18px;
+        font-size: 24px;
     }
 
-    .dashboard-card h2 {
-        margin: 0 0 10px;
-        font-size: 21px;
-    }
-
-    .dashboard-card p {
+    .summary-label {
         color: #6b7280;
-        line-height: 1.5;
-        min-height: 48px;
+        font-size: 14px;
+        margin-top: 15px;
     }
 
-    .card-link {
+    .summary-number {
+        font-size: 30px;
+        font-weight: bold;
+        color: #111827;
+        margin: 3px 0;
+    }
+
+    .summary-status {
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .summary-link {
         display: inline-block;
         margin-top: 15px;
-        text-decoration: none;
         color: #2563eb;
-        font-weight: bold;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
     }
 
-    .info-section {
-        margin-top: 30px;
+    .summary-link:hover {
+        text-decoration: underline;
+    }
+
+
+    /* ==============================
+       MAIN CONTENT
+       ============================== */
+
+    .dashboard-section {
         background: white;
         border-radius: 14px;
         padding: 25px;
         box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        margin-bottom: 25px;
     }
 
-    .info-grid {
+    .dashboard-section h2 {
+        margin: 0 0 20px;
+        font-size: 21px;
+        color: #1f2937;
+    }
+
+
+    /* ==============================
+       RESOURCE TABLE
+       ============================== */
+
+    .resource-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .resource-table th {
+        text-align: left;
+        padding: 13px;
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 13px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .resource-table td {
+        padding: 15px 13px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .resource-table tr:last-child td {
+        border-bottom: none;
+    }
+
+
+    /* ==============================
+       STATUS BADGES
+       ============================== */
+
+    .status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-neutral {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+
+
+    /* ==============================
+       QUICK ACTIONS
+       ============================== */
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+
+    .quick-action {
+        padding: 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #1f2937;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .quick-action:hover {
+        background: #f9fafb;
+        transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+        font-size: 23px;
+        margin-bottom: 8px;
+    }
+
+    .quick-action-title {
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .quick-action-description {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+
+    /* ==============================
+       ARCHITECTURE
+       ============================== */
+
+    .architecture {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 20px;
     }
 
-    .info-item {
+    .architecture-item {
         border-left: 3px solid #2563eb;
         padding-left: 15px;
     }
 
-    .info-item h3 {
-        margin: 0 0 7px;
+    .architecture-item h3 {
+        margin: 0 0 6px;
         font-size: 16px;
     }
 
-    .info-item p {
+    .architecture-item p {
         margin: 0;
         color: #6b7280;
         font-size: 14px;
+        line-height: 1.5;
     }
 
+
+    /* ==============================
+       RESPONSIVE
+       ============================== */
+
+    @media (max-width: 1100px) {
+
+        .summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+    }
+
+
     @media (max-width: 800px) {
-        .dashboard-cards,
-        .info-grid {
+
+        .summary-grid,
+        .quick-actions,
+        .architecture {
             grid-template-columns: 1fr;
         }
 
-        .hero {
-            padding: 30px;
+        .dashboard-header h1 {
+            font-size: 27px;
         }
 
-        .hero h1 {
-            font-size: 30px;
+        .dashboard-section {
+            padding: 18px;
+            overflow-x: auto;
         }
+
     }
 
 </style>
 
 
-<!-- Hero Section -->
+<!-- ==========================================
+     DASHBOARD HEADER
+     ========================================== -->
 
-<div class="hero">
+<div class="dashboard-header">
 
     <h1>OpenStack Cloud Dashboard</h1>
 
     <p>
-        Manage and monitor your OpenStack cloud resources
-        from one simple dashboard. View instances, images,
-        and networks through the OpenStack SDK.
+        Overview of your compute, networking, storage,
+        and floating IP resources.
     </p>
-
-    <a href="/instances/" class="hero-button">
-        View Instances →
-    </a>
 
 </div>
 
 
-<!-- Resource Section -->
+<!-- ==========================================
+     RESOURCE SUMMARY
+     ========================================== -->
 
-<h2 class="section-title">
-    Cloud Resources
-</h2>
-
-
-<div class="dashboard-cards">
+<div class="summary-grid">
 
 
-    <!-- Instances -->
+    <!-- INSTANCES -->
 
-    <div class="dashboard-card">
+    <div class="summary-card">
 
-        <div class="card-icon">
-            🖥️
+        <div class="summary-top">
+
+            <div>
+                <div class="summary-label">
+                    Instances
+                </div>
+
+                <div class="summary-number">
+                    {{ instances|length }}
+                </div>
+
+                <div class="summary-status">
+                    Virtual machines
+                </div>
+            </div>
+
+            <div class="summary-icon">
+                🖥️
+            </div>
+
         </div>
 
-        <h2>Instances</h2>
-
-        <p>
-            View virtual machines running in your
-            OpenStack cloud, including their status,
-            IP addresses, and flavors.
-        </p>
-
-        <a href="/instances/" class="card-link">
+        <a href="/instances/" class="summary-link">
             View Instances →
         </a>
 
     </div>
 
 
-    <!-- Images -->
+    <!-- NETWORKS -->
 
-    <div class="dashboard-card">
+    <div class="summary-card">
 
-        <div class="card-icon">
-            💿
+        <div class="summary-top">
+
+            <div>
+
+                <div class="summary-label">
+                    Networks
+                </div>
+
+                <div class="summary-number">
+                    {{ networks|length }}
+                </div>
+
+                <div class="summary-status">
+                    Virtual networks
+                </div>
+
+            </div>
+
+            <div class="summary-icon">
+                🌐
+            </div>
+
         </div>
 
-        <h2>Images</h2>
-
-        <p>
-            Browse the available images that can
-            be used to create virtual machines.
-        </p>
-
-        <a href="/images/" class="card-link">
-            View Images →
+        <a href="/networks/" class="summary-link">
+            View Networks →
         </a>
 
     </div>
 
 
-    <!-- Networks -->
+    <!-- VOLUMES -->
 
-    <div class="dashboard-card">
+    <div class="summary-card">
 
-        <div class="card-icon">
-            🌐
+        <div class="summary-top">
+
+            <div>
+
+                <div class="summary-label">
+                    Volumes
+                </div>
+
+                <div class="summary-number">
+                    {{ volumes|length }}
+                </div>
+
+                <div class="summary-status">
+                    Block storage
+                </div>
+
+            </div>
+
+            <div class="summary-icon">
+                💾
+            </div>
+
         </div>
 
-        <h2>Networks</h2>
+        <a href="/volumes/" class="summary-link">
+            View Volumes →
+        </a>
 
-        <p>
-            View networks available in your
-            OpenStack environment and their
-            current status.
-        </p>
+    </div>
 
-        <a href="/networks/" class="card-link">
-            View Networks →
+
+    <!-- FLOATING IPs -->
+
+    <div class="summary-card">
+
+        <div class="summary-top">
+
+            <div>
+
+                <div class="summary-label">
+                    Floating IPs
+                </div>
+
+                <div class="summary-number">
+                    {{ floating_ips|length }}
+                </div>
+
+                <div class="summary-status">
+                    Public IP addresses
+                </div>
+
+            </div>
+
+            <div class="summary-icon">
+                🌍
+            </div>
+
+        </div>
+
+        <a href="/floating-ips/" class="summary-link">
+            View Floating IPs →
         </a>
 
     </div>
@@ -254,45 +450,262 @@ OpenStack Dashboard
 </div>
 
 
-<!-- Architecture Information -->
+<!-- ==========================================
+     RESOURCE OVERVIEW TABLE
+     ========================================== -->
 
-<div class="info-section">
+<div class="dashboard-section">
 
-    <h2>OpenStack Services</h2>
+    <h2>Resource Overview</h2>
 
-    <div class="info-grid">
+    <table class="resource-table">
 
-        <div class="info-item">
+        <thead>
+
+            <tr>
+                <th>Resource</th>
+                <th>Total</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+
+            <!-- Instances -->
+
+            <tr>
+
+                <td>
+                    🖥️ <strong>Instances</strong>
+                </td>
+
+                <td>
+                    {{ instances|length }}
+                </td>
+
+                <td>
+                    Virtual machines managed by Nova
+                </td>
+
+                <td>
+                    <a href="/instances/">
+                        Manage
+                    </a>
+                </td>
+
+            </tr>
+
+
+            <!-- Networks -->
+
+            <tr>
+
+                <td>
+                    🌐 <strong>Networks</strong>
+                </td>
+
+                <td>
+                    {{ networks|length }}
+                </td>
+
+                <td>
+                    Virtual networks managed by Neutron
+                </td>
+
+                <td>
+                    <a href="/networks/">
+                        Manage
+                    </a>
+                </td>
+
+            </tr>
+
+
+            <!-- Volumes -->
+
+            <tr>
+
+                <td>
+                    💾 <strong>Volumes</strong>
+                </td>
+
+                <td>
+                    {{ volumes|length }}
+                </td>
+
+                <td>
+                    Persistent block storage managed by Cinder
+                </td>
+
+                <td>
+                    <a href="/volumes/">
+                        Manage
+                    </a>
+                </td>
+
+            </tr>
+
+
+            <!-- Floating IPs -->
+
+            <tr>
+
+                <td>
+                    🌍 <strong>Floating IPs</strong>
+                </td>
+
+                <td>
+                    {{ floating_ips|length }}
+                </td>
+
+                <td>
+                    Public IP addresses managed by Neutron
+                </td>
+
+                <td>
+                    <a href="/floating-ips/">
+                        Manage
+                    </a>
+                </td>
+
+            </tr>
+
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<!-- ==========================================
+     QUICK ACTIONS
+     ========================================== -->
+
+<div class="dashboard-section">
+
+    <h2>Quick Actions</h2>
+
+    <div class="quick-actions">
+
+
+        <a href="/instances/" class="quick-action">
+
+            <div class="quick-action-icon">
+                🖥️
+            </div>
+
+            <div class="quick-action-title">
+                Instances
+            </div>
+
+            <div class="quick-action-description">
+                Create and manage virtual machines.
+            </div>
+
+        </a>
+
+
+        <a href="/networks/" class="quick-action">
+
+            <div class="quick-action-icon">
+                🌐
+            </div>
+
+            <div class="quick-action-title">
+                Networks
+            </div>
+
+            <div class="quick-action-description">
+                Create and manage private networks.
+            </div>
+
+        </a>
+
+
+        <a href="/volumes/" class="quick-action">
+
+            <div class="quick-action-icon">
+                💾
+            </div>
+
+            <div class="quick-action-title">
+                Volumes
+            </div>
+
+            <div class="quick-action-description">
+                Manage persistent block storage.
+            </div>
+
+        </a>
+
+
+        <a href="/floating-ips/" class="quick-action">
+
+            <div class="quick-action-icon">
+                🌍
+            </div>
+
+            <div class="quick-action-title">
+                Floating IPs
+            </div>
+
+            <div class="quick-action-description">
+                Manage public IP addresses.
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================================
+     OPENSTACK ARCHITECTURE
+     ========================================== -->
+
+<div class="dashboard-section">
+
+    <h2>OpenStack Architecture</h2>
+
+    <div class="architecture">
+
+
+        <div class="architecture-item">
 
             <h3>Nova — Compute</h3>
 
             <p>
-                Manages virtual machine instances
-                and their lifecycle.
+                Manages virtual machine instances,
+                their creation, deletion, and lifecycle.
             </p>
 
         </div>
 
 
-        <div class="info-item">
-
-            <h3>Glance — Image</h3>
-
-            <p>
-                Provides images used to create
-                virtual machines.
-            </p>
-
-        </div>
-
-
-        <div class="info-item">
+        <div class="architecture-item">
 
             <h3>Neutron — Networking</h3>
 
             <p>
-                Provides networking for virtual
-                machines and cloud resources.
+                Provides private networks, ports,
+                routers, subnets, and floating IPs.
+            </p>
+
+        </div>
+
+
+        <div class="architecture-item">
+
+            <h3>Cinder — Block Storage</h3>
+
+            <p>
+                Provides persistent volumes that
+                can be attached to virtual machines.
             </p>
 
         </div>
@@ -302,3 +715,4 @@ OpenStack Dashboard
 </div>
 
 {% endblock %}
+```

@@ -1,0 +1,324 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}
+Create Volume
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .volume-page {
+        max-width: 850px;
+        margin: 40px auto;
+    }
+
+    .volume-header {
+        margin-bottom: 30px;
+    }
+
+    .volume-header h1 {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    .volume-header p {
+        color: #6b7280;
+        font-size: 16px;
+    }
+
+    .volume-card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e5e7eb;
+    }
+
+    .info-box {
+        background: #f3f7ff;
+        border: 1px solid #dbe7ff;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 28px;
+    }
+
+    .info-box h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+    }
+
+    .info-box p {
+        margin: 0;
+        color: #6b7280;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 15px;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 9px;
+        font-size: 15px;
+        background: white;
+        transition: 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 7px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .error-message {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        padding: 14px 16px;
+        border-radius: 10px;
+        margin-bottom: 24px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .cancel-button,
+    .create-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        border-radius: 9px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .cancel-button {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+    }
+
+    .cancel-button:hover {
+        background: #e5e7eb;
+    }
+
+    .create-button {
+        background: #2563eb;
+        color: white;
+        border: none;
+    }
+
+    .create-button:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .volume-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #eff6ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin-bottom: 15px;
+    }
+
+</style>
+
+
+<div class="volume-page">
+
+    <!-- Page Header -->
+    <div class="volume-header">
+
+        <div class="volume-icon">
+            💾
+        </div>
+
+        <h1>Create Volume</h1>
+
+        <p>
+            Create persistent block storage that can be attached to your
+            OpenStack instance.
+        </p>
+
+    </div>
+
+
+    <!-- Main Card -->
+    <div class="volume-card">
+
+        <!-- Information -->
+        <div class="info-box">
+
+            <h3>💡 About Volumes</h3>
+
+            <p>
+                A Cinder volume provides persistent block storage for your
+                virtual machine. Data stored on a volume remains available
+                even if the instance is stopped or recreated.
+            </p>
+
+        </div>
+
+
+        <!-- Error -->
+        {% if error %}
+
+            <div class="error-message">
+                <strong>Unable to create volume</strong>
+                <br>
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+        <!-- Form -->
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <!-- Volume Name -->
+            <div class="form-group">
+
+                <label for="name">
+                    Volume Name
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="e.g. database-storage"
+                    required
+                >
+
+                <span class="help-text">
+                    Choose a descriptive name for your volume.
+                </span>
+
+            </div>
+
+
+            <!-- Size -->
+            <div class="form-group">
+
+                <label for="size">
+                    Size (GB)
+                </label>
+
+                <input
+                    type="number"
+                    id="size"
+                    name="size"
+                    min="1"
+                    placeholder="e.g. 10"
+                    required
+                >
+
+                <span class="help-text">
+                    Specify how much storage you want to allocate.
+                </span>
+
+            </div>
+
+
+            <!-- Volume Type -->
+            {% if volume_types %}
+
+            <div class="form-group">
+
+                <label for="volume_type">
+                    Volume Type
+                </label>
+
+                <select
+                    id="volume_type"
+                    name="volume_type"
+                >
+
+                    <option value="">
+                        Default Volume Type
+                    </option>
+
+                    {% for volume_type in volume_types %}
+
+                        <option value="{{ volume_type.id }}">
+                            {{ volume_type.name }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <span class="help-text">
+                    Select the storage backend/type provided by Cinder.
+                </span>
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- Buttons -->
+            <div class="form-actions">
+
+                <a
+                    href="{% url 'instance:detail' instance_id %}"
+                    class="cancel-button"
+                >
+                    ← Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="create-button"
+                >
+                    💾 Create Volume
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
