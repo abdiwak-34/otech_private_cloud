@@ -1,324 +1,225 @@
 {% extends "dashboard/base.html" %}
-
-{% block title %}
-Create Volume
-{% endblock %}
+{% block title %}Create Volume{% endblock %}
 
 {% block content %}
-
 <style>
 
-    .volume-page {
-        max-width: 850px;
-        margin: 40px auto;
-    }
+.form-page { max-width: 580px; margin: 0 auto; padding-bottom: 50px; }
 
-    .volume-header {
-        margin-bottom: 30px;
-    }
+.breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: #64748b; margin-bottom: 18px;
+}
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
 
-    .volume-header h1 {
-        font-size: 32px;
-        margin-bottom: 8px;
-    }
+.page-heading { margin-bottom: 24px; }
+.page-heading h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0f172a; }
+.page-heading p  { margin: 5px 0 0; color: #64748b; font-size: 14px; }
 
-    .volume-header p {
-        color: #6b7280;
-        font-size: 16px;
-    }
+/* messages */
+.msg { padding: 12px 16px; border-radius: 9px; margin-bottom: 14px;
+       font-size: 13px; font-weight: 500; display: flex; align-items: flex-start; gap: 9px; }
+.msg.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.msg.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+.msg.warning { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
 
-    .volume-card {
-        background: white;
-        border-radius: 16px;
-        padding: 32px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e5e7eb;
-    }
+/* card */
+.card {
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+}
 
-    .info-box {
-        background: #f3f7ff;
-        border: 1px solid #dbe7ff;
-        border-radius: 12px;
-        padding: 18px;
-        margin-bottom: 28px;
-    }
+.card-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 22px; border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
 
-    .info-box h3 {
-        margin: 0 0 8px;
-        font-size: 16px;
-    }
+.ch-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #fef3c7;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+}
 
-    .info-box p {
-        margin: 0;
-        color: #6b7280;
-        line-height: 1.6;
-    }
+.card-head h2 { margin: 0; font-size: 16px; color: #0f172a; }
+.card-head p  { margin: 2px 0 0; font-size: 12px; color: #64748b; }
 
-    .form-group {
-        margin-bottom: 24px;
-    }
+.card-body { padding: 22px; }
 
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 15px;
-    }
+.fg { margin-bottom: 18px; }
 
-    .form-group input,
-    .form-group select {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 13px 14px;
-        border: 1px solid #d1d5db;
-        border-radius: 9px;
-        font-size: 15px;
-        background: white;
-        transition: 0.2s;
-    }
+.fg label {
+    display: block; margin-bottom: 6px;
+    font-size: 13px; font-weight: 650; color: #374151;
+}
+.fg label .req { color: #ef4444; }
+.fg label .opt { color: #94a3b8; font-weight: 500; font-size: 11px; margin-left: 4px; }
 
-    .form-group input:focus,
-    .form-group select:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-    }
+.fg input, .fg select {
+    width: 100%; box-sizing: border-box;
+    padding: 10px 13px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 14px; background: white; outline: none;
+    transition: border 0.2s, box-shadow 0.2s; color: #0f172a;
+}
 
-    .help-text {
-        display: block;
-        margin-top: 7px;
-        font-size: 13px;
-        color: #6b7280;
-    }
+.fg input:focus, .fg select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
 
-    .error-message {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        color: #b91c1c;
-        padding: 14px 16px;
-        border-radius: 10px;
-        margin-bottom: 24px;
-    }
+.fg .hint { display: block; margin-top: 5px; font-size: 11px; color: #94a3b8; }
 
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 32px;
-        padding-top: 24px;
-        border-top: 1px solid #e5e7eb;
-    }
+/* size row */
+.size-row { display: flex; align-items: center; gap: 0; }
+.size-row input { border-radius: 8px 0 0 8px; }
+.size-unit {
+    padding: 10px 14px;
+    background: #f8fafc; border: 1px solid #d1d5db;
+    border-left: none; border-radius: 0 8px 8px 0;
+    font-size: 14px; color: #64748b; white-space: nowrap;
+}
 
-    .cancel-button,
-    .create-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 12px 20px;
-        border-radius: 9px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+/* toggle row */
+.toggle-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    background: #f0fdf4; cursor: pointer;
+}
+.toggle-row input[type="checkbox"] {
+    width: 15px; height: 15px;
+    accent-color: #16a34a; flex-shrink: 0; cursor: pointer;
+}
+.toggle-row span { font-size: 13px; color: #166534; font-weight: 600; }
+.toggle-row small { font-size: 11px; color: #64748b; display: block; margin-top: 1px; font-weight: 400; }
 
-    .cancel-button {
-        background: #f3f4f6;
-        color: #374151;
-        border: 1px solid #d1d5db;
-    }
+.divider { border: none; border-top: 1px solid #f1f5f9; margin: 20px 0; }
 
-    .cancel-button:hover {
-        background: #e5e7eb;
-    }
+/* actions */
+.form-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 18px 22px; border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
 
-    .create-button {
-        background: #2563eb;
-        color: white;
-        border: none;
-    }
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-ghost   { background: white; color: #374151; border-color: #d1d5db; }
+.btn-ghost:hover { background: #f9fafb; }
 
-    .create-button:hover {
-        background: #1d4ed8;
-        transform: translateY(-1px);
-        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.25);
-    }
-
-    .volume-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 12px;
-        background: #eff6ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        margin-bottom: 15px;
-    }
-
+@media (max-width: 600px) {
+    .form-actions { flex-direction: column-reverse; }
+    .btn { width: 100%; justify-content: center; }
+}
 </style>
 
+<div class="form-page">
 
-<div class="volume-page">
-
-    <!-- Page Header -->
-    <div class="volume-header">
-
-        <div class="volume-icon">
-            💾
-        </div>
-
-        <h1>Create Volume</h1>
-
-        <p>
-            Create persistent block storage that can be attached to your
-            OpenStack instance.
-        </p>
-
+    <div class="breadcrumb">
+        <a href="{% url 'instances' %}">Instances</a>
+        <span>/</span>
+        <a href="{% url 'instance:detail' instance_id %}">Detail</a>
+        <span>/</span>
+        <span>Create Volume</span>
     </div>
 
+    <div class="page-heading">
+        <h1>Create Volume</h1>
+        <p>Add persistent block storage to this instance.</p>
+    </div>
 
-    <!-- Main Card -->
-    <div class="volume-card">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg {{ message.tags }}">
+                <span>{% if message.tags == 'error' %}⚠{% elif message.tags == 'success' %}✓{% else %}ℹ{% endif %}</span>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-        <!-- Information -->
-        <div class="info-box">
+    <div class="card">
 
-            <h3>💡 About Volumes</h3>
-
-            <p>
-                A Cinder volume provides persistent block storage for your
-                virtual machine. Data stored on a volume remains available
-                even if the instance is stopped or recreated.
-            </p>
-
+        <div class="card-head">
+            <div class="ch-icon">💾</div>
+            <div>
+                <h2>Volume Settings</h2>
+                <p>Name, size, and attachment options</p>
+            </div>
         </div>
 
+        <div class="card-body">
+            <form method="POST" id="vol-form">
+                {% csrf_token %}
 
-        <!-- Error -->
-        {% if error %}
+                <div class="fg">
+                    <label for="name">Volume Name <span class="opt">optional</span></label>
+                    <input type="text" id="name" name="name"
+                           value="{{ form_data.name|default:'' }}"
+                           placeholder="e.g. data-disk" autofocus>
+                    <span class="hint">Leave blank to auto-name.</span>
+                </div>
 
-            <div class="error-message">
-                <strong>Unable to create volume</strong>
-                <br>
-                {{ error }}
-            </div>
+                <div class="fg">
+                    <label for="size">Size <span class="req">*</span></label>
+                    <div class="size-row">
+                        <input type="number" id="size" name="size"
+                               value="{{ form_data.size|default:'' }}"
+                               min="1" placeholder="10" required>
+                        <span class="size-unit">GB</span>
+                    </div>
+                    <span class="hint">Minimum 1 GB.</span>
+                </div>
 
-        {% endif %}
+                {% if volume_types %}
+                <div class="fg">
+                    <label for="volume_type">Volume Type <span class="opt">optional</span></label>
+                    <select id="volume_type" name="volume_type">
+                        <option value="">— Default —</option>
+                        {% for vt in volume_types %}
+                            <option value="{{ vt.id }}"
+                                {% if form_data.volume_type == vt.id %}selected{% endif %}>
+                                {{ vt.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
 
+                <hr class="divider">
 
-        <!-- Form -->
-        <form method="POST">
+                <div class="fg">
+                    <label class="toggle-row">
+                        <input type="checkbox" name="auto_attach"
+                               {% if form_data.auto_attach == 'on' %}checked{% endif %}>
+                        <div>
+                            <span>Auto-attach to this instance</span>
+                            <small>Volume will be created and immediately attached</small>
+                        </div>
+                    </label>
+                </div>
 
-            {% csrf_token %}
+            </form>
+        </div>
 
-
-            <!-- Volume Name -->
-            <div class="form-group">
-
-                <label for="name">
-                    Volume Name
-                </label>
-
-                <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    placeholder="e.g. database-storage"
-                    required
-                >
-
-                <span class="help-text">
-                    Choose a descriptive name for your volume.
-                </span>
-
-            </div>
-
-
-            <!-- Size -->
-            <div class="form-group">
-
-                <label for="size">
-                    Size (GB)
-                </label>
-
-                <input
-                    type="number"
-                    id="size"
-                    name="size"
-                    min="1"
-                    placeholder="e.g. 10"
-                    required
-                >
-
-                <span class="help-text">
-                    Specify how much storage you want to allocate.
-                </span>
-
-            </div>
-
-
-            <!-- Volume Type -->
-            {% if volume_types %}
-
-            <div class="form-group">
-
-                <label for="volume_type">
-                    Volume Type
-                </label>
-
-                <select
-                    id="volume_type"
-                    name="volume_type"
-                >
-
-                    <option value="">
-                        Default Volume Type
-                    </option>
-
-                    {% for volume_type in volume_types %}
-
-                        <option value="{{ volume_type.id }}">
-                            {{ volume_type.name }}
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <span class="help-text">
-                    Select the storage backend/type provided by Cinder.
-                </span>
-
-            </div>
-
-            {% endif %}
-
-
-            <!-- Buttons -->
-            <div class="form-actions">
-
-                <a
-                    href="{% url 'instance:detail' instance_id %}"
-                    class="cancel-button"
-                >
-                    ← Cancel
-                </a>
-
-                <button
-                    type="submit"
-                    class="create-button"
-                >
-                    💾 Create Volume
-                </button>
-
-            </div>
-
-        </form>
+        <div class="form-actions">
+            <a href="{% url 'instance:detail' instance_id %}" class="btn btn-ghost">← Cancel</a>
+            <button type="submit" form="vol-form" class="btn btn-primary">
+                💾 Create Volume
+            </button>
+        </div>
 
     </div>
 
 </div>
-
 {% endblock %}
