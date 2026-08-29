@@ -629,34 +629,31 @@
 
 
 <script>
-const INSTANCE_ID   = "{{ instance_id|escapejs }}";
-const CLEANUP_URL   = "{% url 'cleanup' instance_id %}";
-const CSRF_TOKEN    = "{{ csrf_token }}";
+const INSTANCE_ID = "{{ instance_id|escapejs }}";
+const CLEANUP_URL = "{% url 'cleanup' instance_id %}";
+const CSRF_TOKEN  = "{{ csrf_token }}";
 
-/* ──────────────────────────────────────────────────────────
-   STEP ICON MAP
-   ────────────────────────────────────────────────────────── */
-const STEP_ICONS = {
-    "Disassociate floating": "🔗",
-    "Delete instance":       "🖥️",
-    "Delete volume":         "💾",
-    "Release floating":      "🌍",
-    "Scan":                  "🔍",
+/* ── icon map ─────────────────────────────────────────── */
+const ICONS = {
+    "Disassociate": "🔗",
+    "Delete instance": "🖥️",
+    "Delete volume":   "💾",
+    "Release":         "🌍",
+    "Scan":            "🔍",
+    "Find":            "🔍",
 };
 
 function iconFor(label) {
-    for (const [key, icon] of Object.entries(STEP_ICONS)) {
+    for (const [key, icon] of Object.entries(ICONS)) {
         if (label.startsWith(key)) return icon;
     }
     return "⚙️";
 }
 
-/* ──────────────────────────────────────────────────────────
-   HELPERS
-   ────────────────────────────────────────────────────────── */
+/* ── progress helpers ────────────────────────────────── */
 function setProgress(pct, label) {
     document.getElementById("overall-fill").style.width = pct + "%";
-    document.getElementById("overall-pct").textContent  = pct + "%";
+    document.getElementById("overall-pct").textContent  = Math.round(pct) + "%";
     document.getElementById("overall-label-text").textContent = label;
 }
 
@@ -664,182 +661,246 @@ function setHeadSub(text) {
     document.getElementById("progress-head-sub").textContent = text;
 }
 
-function now() {
-    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+function nowStr() {
+    return new Date().toLocaleTimeString([], {
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
 }
 
-/* ──────────────────────────────────────────────────────────
-   RENDER A STEP ROW (appended to steps-list)
-   ────────────────────────────────────────────────────────── */
-function renderStep(step, idx) {
+/* ── append an animated step row ─────────────────────── */
+let stepIndex = 0;
+
+function appendStep(step) {
     const list = document.getElementById("steps-list");
+    const idx  = stepIndex++;
 
-    const statusClass = {
-        ok:      "done",
-        warning: "warning",
-        error:   "failed",
-    }[step.status] || "done";
-
-    const bubbleClass = {
-        ok:      "bubble-done",
-        warning: "bubble-warning",
-        error:   "bubble-error",
-    }[step.status] || "bubble-done";
-
-    const icon = iconFor(step.label);
-
-    const iconChar = {
-        ok:      "✓",
-        warning: "⚠",
-        error:   "✕",
-    }[step.status] || "✓";
+    const statusClass = { ok: "done", warning: "warning", error: "failed" }[step.status] || "done";
+    const bubbleClass = { ok: "bubble-done", warning: "bubble-warning", error: "bubble-error" }[step.status] || "bubble-done";
+    const iconChar    = { ok: "✓", warning: "⚠", error: "✕" }[step.status] || "✓";
+    const labelIcon   = iconFor(step.label);
 
     const el = document.createElement("div");
-    el.className = `step-item ${statusClass}`;
-    el.id = `step-${idx}`;
-    el.style.opacity = "0";
-    el.style.transform = "translateY(8px)";
-    el.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+    el.className = "step-item " + statusClass;
+    el.style.cssText = "opacity:0;transform:translateY(10px);transition:opacity 0.35s ease,transform 0.35s ease;";
 
-    el.innerHTML = `
-        <div class="step-bubble ${bubbleClass}">${iconChar}</div>
-        <div class="step-content">
-            <div class="step-label">${icon} ${step.label}</div>
-            <div class="step-detail ${step.status}">${step.detail || ""}</div>
-        </div>
-        <div class="step-time">${now()}</div>
-    `;
+    el.innerHTML =
+        '<div class="step-bubble ' + bubbleClass + '">' + iconChar + '</div>' +
+        '<div class="step-content">' +
+            '<div class="step-label">' + labelIcon + ' ' + escHtml(step.label) + '</div>' +
+            '<div class="step-detail ' + step.status + '">' + escHtml(step.detail || "") + '</div>' +
+        '</div>' +
+        '<div class="step-time">' + nowStr() + '</div>';
 
     list.appendChild(el);
 
-    // Animate in with a small stagger
+    // Scroll the new row into view
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // Fade + slide in
     requestAnimationFrame(() => {
-        setTimeout(() => {
-            el.style.opacity  = "1";
+        requestAnimationFrame(() => {
+            el.style.opacity   = "1";
             el.style.transform = "translateY(0)";
-        }, idx * 120);
+        });
     });
 }
 
-/* ──────────────────────────────────────────────────────────
-   SHOW RESULT BANNER
-   ────────────────────────────────────────────────────────── */
-function showResult(ok, name, steps) {
-    const banner  = document.getElementById("result-banner");
-    const icon    = document.getElementById("result-icon");
-    const title   = document.getElementById("result-title");
-    const body    = document.getElementById("result-body");
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
 
-    const errors   = steps.filter(s => s.status === "error").length;
-    const warnings = steps.filter(s => s.status === "warning").length;
+/* ── result banner ───────────────────────────────────── */
+function showResult(ok, name, totalSteps, errorCount, warnCount) {
+    const banner = document.getElementById("result-banner");
+    const icon   = document.getElementById("result-icon");
+    const title  = document.getElementById("result-title");
+    const body   = document.getElementById("result-body");
 
     if (ok) {
-        banner.className = "result-banner success";
+        banner.className  = "result-banner success";
         icon.textContent  = "✅";
-        title.textContent = `Cleanup complete for '${name}'`;
-        const parts = [];
-        const okSteps = steps.filter(s => s.status === "ok");
-        parts.push(`${okSteps.length} step${okSteps.length !== 1 ? "s" : ""} completed`);
-        if (warnings) parts.push(`${warnings} warning${warnings !== 1 ? "s" : ""}`);
-        body.textContent = parts.join(" · ");
+        title.textContent = "Cleanup complete for '" + name + "'";
+        const okCount     = totalSteps - errorCount - warnCount;
+        let msg = okCount + " step" + (okCount !== 1 ? "s" : "") + " completed";
+        if (warnCount) msg += " · " + warnCount + " warning" + (warnCount !== 1 ? "s" : "");
+        body.textContent = msg;
     } else {
-        banner.className = "result-banner error";
+        banner.className  = "result-banner error";
         icon.textContent  = "❌";
-        title.textContent = "Cleanup encountered errors";
-        body.textContent  = `${errors} error${errors !== 1 ? "s" : ""} occurred — check step details above.`;
+        title.textContent = "Cleanup finished with issues";
+        body.textContent  = errorCount + " error" + (errorCount !== 1 ? "s" : "") + " — see step details above.";
     }
 
-    banner.style.display = "flex";
-    banner.style.opacity = "0";
-    banner.style.transform = "translateY(10px)";
-    banner.style.transition = "opacity 0.5s, transform 0.5s";
+    // Animate banner in
+    banner.style.cssText = "display:flex;opacity:0;transform:translateY(10px);transition:opacity 0.5s,transform 0.5s;";
     requestAnimationFrame(() => {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             banner.style.opacity   = "1";
             banner.style.transform = "translateY(0)";
-        }, 50);
+        });
     });
 
-    // Update header
-    const head = document.querySelector(".progress-panel-head h2");
-    head.textContent = ok ? "✅ Cleanup Complete" : "⚠️ Cleanup Finished with Issues";
-    document.querySelector(".progress-panel-head").style.background =
-        ok ? "linear-gradient(135deg, #14532d, #15803d)" :
-             "linear-gradient(135deg, #7f1d1d, #991b1b)";
+    // Update header colour
+    const head = document.querySelector(".progress-panel-head");
+    head.querySelector("h2").textContent = ok ? "✅ Cleanup Complete" : "⚠️ Cleanup Finished with Issues";
+    head.style.background = ok
+        ? "linear-gradient(135deg,#14532d,#15803d)"
+        : "linear-gradient(135deg,#7f1d1d,#991b1b)";
 }
 
-/* ──────────────────────────────────────────────────────────
-   MAIN — kick off cleanup
-   ────────────────────────────────────────────────────────── */
-async function startCleanup() {
-    // Hide confirm UI
-    document.getElementById("confirm-card").style.opacity  = "0.45";
-    document.getElementById("warning-box").style.display   = "none";
+/* ── main ────────────────────────────────────────────── */
+function startCleanup() {
+    // Disable button immediately to prevent double-click
+    const btn = document.getElementById("start-cleanup-btn");
+    btn.disabled = true;
+    btn.textContent = "Starting…";
+
+    // Dim confirm card, hide controls
+    document.getElementById("confirm-card").style.opacity   = "0.45";
+    document.getElementById("warning-box").style.display    = "none";
     document.getElementById("action-buttons").style.display = "none";
 
     // Show progress panel
     const panel = document.getElementById("progress-panel");
-    panel.style.display = "block";
-    panel.style.opacity = "0";
+    panel.style.display    = "block";
+    panel.style.opacity    = "0";
     panel.style.transition = "opacity 0.4s";
     requestAnimationFrame(() => {
-        setTimeout(() => { panel.style.opacity = "1"; }, 30);
+        requestAnimationFrame(() => { panel.style.opacity = "1"; });
     });
 
     setProgress(5, "Connecting to OpenStack…");
-    setHeadSub("Sending cleanup request to the server…");
+    setHeadSub("Sending cleanup request…");
 
-    let data;
-    try {
-        const resp = await fetch(CLEANUP_URL, {
-            method:  "POST",
-            headers: {
-                "X-CSRFToken": CSRF_TOKEN,
-                "Accept":      "application/json",
-            },
-        });
-
+    // ── Open SSE stream via fetch + ReadableStream ─────────
+    // We use fetch() instead of EventSource because EventSource
+    // does not support POST requests or custom headers (CSRF).
+    fetch(CLEANUP_URL, {
+        method:  "POST",
+        headers: {
+            "X-CSRFToken": CSRF_TOKEN,
+            "Accept":      "text/event-stream",
+        },
+        credentials: "same-origin",
+    })
+    .then(resp => {
         if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+            throw new Error("HTTP " + resp.status + " — " + resp.statusText);
+        }
+        return resp.body;
+    })
+    .then(body => {
+        // Remove the initial "scanning" placeholder
+        const scanEl = document.getElementById("step-scanning");
+        if (scanEl) scanEl.remove();
+
+        const reader  = body.getReader();
+        const decoder = new TextDecoder();
+        let   buffer  = "";
+
+        // Track state for progress calculation
+        let totalSteps = 0;
+        let doneSteps  = 0;
+        let errorCount = 0;
+        let warnCount  = 0;
+        let planName   = "instance";
+
+        function processBuffer() {
+            // SSE format: "event: <type>\ndata: <json>\n\n"
+            const blocks = buffer.split("\n\n");
+            buffer = blocks.pop();          // keep partial last block
+
+            for (const block of blocks) {
+                if (!block.trim()) continue;
+
+                let eventType = "message";
+                let dataLine  = "";
+
+                for (const line of block.split("\n")) {
+                    if (line.startsWith("event: ")) {
+                        eventType = line.slice(7).trim();
+                    } else if (line.startsWith("data: ")) {
+                        dataLine = line.slice(6).trim();
+                    }
+                }
+
+                if (!dataLine) continue;
+
+                let payload;
+                try { payload = JSON.parse(dataLine); }
+                catch (e) { continue; }
+
+                if (eventType === "plan") {
+                    // Server told us how many steps to expect
+                    totalSteps = payload.total || 4;
+                    planName   = payload.name  || "instance";
+                    setHeadSub(
+                        "Removing " + payload.fips + " floating IP(s), " +
+                        "1 instance, " + payload.volumes + " volume(s)…"
+                    );
+                    setProgress(10, "Running " + totalSteps + " operation(s)…");
+
+                } else if (eventType === "step") {
+                    doneSteps++;
+                    if (payload.status === "error")   errorCount++;
+                    if (payload.status === "warning")  warnCount++;
+
+                    appendStep(payload);
+
+                    const pct = totalSteps > 0
+                        ? 10 + Math.round(85 * doneSteps / totalSteps)
+                        : 50;
+                    setProgress(pct, "Step " + doneSteps + (totalSteps ? " of " + totalSteps : "") + "…");
+
+                } else if (eventType === "done") {
+                    setProgress(100, "Done");
+                    setHeadSub("All operations completed.");
+                    showResult(
+                        payload.ok,
+                        payload.name || planName,
+                        doneSteps,
+                        errorCount,
+                        warnCount
+                    );
+                }
+            }
         }
 
-        data = await resp.json();
+        function pump() {
+            return reader.read().then(({ done, value }) => {
+                if (value) {
+                    buffer += decoder.decode(value, { stream: true });
+                    processBuffer();
+                }
+                if (done) {
+                    // Flush any remaining buffer
+                    buffer += "\n\n";
+                    processBuffer();
+                    return;
+                }
+                return pump();
+            });
+        }
 
-    } catch (err) {
-        // Remove scanning placeholder
-        document.getElementById("step-scanning").remove();
-        setProgress(100, "Request failed");
-        setHeadSub("Could not reach the server.");
-        renderStep({ label: "Network request", status: "error", detail: err.message }, 0);
-        showResult(false, "unknown", [{ status: "error" }]);
-        return;
-    }
+        return pump();
+    })
+    .catch(err => {
+        const scanEl = document.getElementById("step-scanning");
+        if (scanEl) scanEl.remove();
 
-    // Remove the initial scanning placeholder
-    const scanEl = document.getElementById("step-scanning");
-    if (scanEl) scanEl.remove();
-
-    const steps = data.steps || [];
-    const total = steps.length;
-
-    setProgress(15, "Processing steps…");
-    setHeadSub(`Running ${total} cleanup operation${total !== 1 ? "s" : ""}…`);
-
-    // Animate each step in with a delay
-    for (let i = 0; i < steps.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, 350));
-        renderStep(steps[i], i);
-        const pct = 15 + Math.round((80 * (i + 1)) / Math.max(total, 1));
-        setProgress(pct, `Step ${i + 1} of ${total}`);
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 400));
-
-    setProgress(100, "Done");
-    setHeadSub("All operations completed.");
-
-    const hasErrors = steps.some(s => s.status === "error");
-    showResult(data.ok && !hasErrors, data.name || "instance", steps);
+        setProgress(100, "Failed");
+        setHeadSub("Connection error.");
+        appendStep({
+            label:  "Connection error",
+            status: "error",
+            detail: err.message || String(err),
+        });
+        showResult(false, "instance", 1, 1, 0);
+    });
 }
 </script>
 

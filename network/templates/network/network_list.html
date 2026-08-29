@@ -457,9 +457,9 @@
 
                         <!-- Subnets -->
                         <td>
-                            {% if network._subnets %}
+                            {% if network.subnets %}
                                 <div class="subnet-list">
-                                    {% for subnet in network._subnets %}
+                                    {% for subnet in network.subnets %}
                                         <span class="subnet-pill" title="{{ subnet.name }}">{{ subnet.cidr }}</span>
                                     {% endfor %}
                                 </div>
@@ -569,8 +569,8 @@
 
                         <!-- External Gateway -->
                         <td>
-                            {% if router.external_gateway_info and router.external_gateway_info.network_id %}
-                                <span class="mono">{{ router.external_gateway_info.network_id|truncatechars:18 }}</span>
+                            {% if router.gw_network_id %}
+                                <span class="mono">{{ router.gw_network_id|truncatechars:18 }}</span>
                             {% else %}
                                 <span style="color:#94a3b8;font-size:12px;">None</span>
                             {% endif %}
@@ -578,7 +578,7 @@
 
                         <!-- SNAT -->
                         <td>
-                            {% if router.external_gateway_info and router.external_gateway_info.enable_snat %}
+                            {% if router.gw_snat %}
                                 <span class="status-badge s-active"><span class="dot"></span>Enabled</span>
                             {% else %}
                                 <span class="status-badge s-down"><span class="dot"></span>Disabled</span>

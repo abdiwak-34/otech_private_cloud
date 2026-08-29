@@ -395,13 +395,7 @@
                     <tr>
                         <td>
                             <strong>
-                                {{ server_map|default_if_none:"" }}
-                                {% if port.device_id in server_map %}
-                                    {{ server_map|dictsort:"0" }}
-                                {% endif %}
-                                {% for sid, sname in server_map.items %}
-                                    {% if sid == port.device_id %}{{ sname }}{% endif %}
-                                {% endfor %}
+                                {% for sid, sname in server_map.items %}{% if sid == port.device_id %}{{ sname }}{% endif %}{% endfor %}
                             </strong>
                             <div class="mono">{{ port.device_id|truncatechars:20 }}</div>
                         </td>

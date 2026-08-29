@@ -1,9 +1,8 @@
 import json
 import openstack
 
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import render, redirect
-from django.views.decorators.http import require_POST
 from django.contrib import messages
 
 
@@ -19,10 +18,32 @@ def home(request):
     conn = get_openstack_connection()
 
     instances    = list(conn.compute.servers())
-    networks     = list(conn.network.networks())
+    raw_networks = list(conn.network.networks())
     volumes      = list(conn.block_storage.volumes())
     floating_ips = list(conn.network.ips())
-    routers      = list(conn.network.routers())
+    raw_routers  = list(conn.network.routers())
+
+    # Convert to plain dicts so templates never hit SDK underscore attributes
+    networks = [
+        {
+            "id":                 n.id,
+            "name":               n.name or "",
+            "status":             n.status or "",
+            "is_router_external": getattr(n, "is_router_external", False),
+        }
+        for n in raw_networks
+    ]
+
+    routers = []
+    for r in raw_routers:
+        gw = r.external_gateway_info or {}
+        routers.append({
+            "id":            r.id,
+            "name":          r.name or "",
+            "status":        r.status or "",
+            "gw_network_id": gw.get("network_id", ""),
+            "gw_snat":       gw.get("enable_snat", False),
+        })
 
     instance_active  = sum(1 for s in instances if s.status == "ACTIVE")
     instance_shutoff = sum(1 for s in instances if s.status == "SHUTOFF")
@@ -59,7 +80,7 @@ def home(request):
     volume_error     = sum(1 for v in volumes if v.status == "error")
     volume_total_gb  = sum(getattr(v, "size", 0) or 0 for v in volumes)
 
-    networks_external = sum(1 for n in networks if getattr(n, "is_router_external", False))
+    networks_external = sum(1 for n in networks if n["is_router_external"])
     networks_internal = len(networks) - networks_external
 
     fip_assigned = sum(
@@ -213,105 +234,141 @@ def cleanup_instance(request, instance_id):
             messages.error(request, f"Could not load instance: {exc}")
             return redirect("instances")
 
-    # ── POST: perform cleanup, return JSON ──────────────────
-    steps = []
+    # ── POST: stream cleanup steps via Server-Sent Events ──
+    def event_stream():
+        """Generator that yields SSE-formatted lines as each step completes."""
 
-    def step(label, status, detail=""):
-        steps.append({"label": label, "status": status, "detail": detail})
+        def send(event_type, data):
+            return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
-    try:
-        server = conn.compute.get_server(instance_id)
-        if not server:
-            return JsonResponse({"ok": False, "error": "Instance not found.", "steps": steps})
+        conn2 = get_openstack_connection()
 
-        instance_name = server.name
-
-        # ── Collect volumes ──────────────────────────────
-        volume_ids = []
-        for v in (getattr(server, "attached_volumes", None) or []):
-            vid = v.get("id") or v.get("volume_id")
-            if vid:
-                volume_ids.append(vid)
-
-        # ── Collect floating IPs ─────────────────────────
-        server_ips = set()
-        for net_name, addrs in (server.addresses or {}).items():
-            for a in addrs:
-                if a.get("addr"):
-                    server_ips.add(a["addr"])
-
-        fips_to_delete = []
         try:
-            for fip in conn.network.ips():
-                fip_fixed = getattr(fip, "fixed_ip_address", None)
-                if fip_fixed and fip_fixed in server_ips:
-                    fips_to_delete.append(fip)
+            server = conn2.compute.get_server(instance_id)
+            if not server:
+                yield send("step", {"label": "Find instance", "status": "error",
+                                    "detail": "Instance not found"})
+                yield send("done", {"ok": False, "name": instance_id})
+                return
+
+            instance_name = server.name
+
+            # ── Collect volumes ──────────────────────────
+            volume_ids = []
+            for v in (getattr(server, "attached_volumes", None) or []):
+                vid = v.get("id") or v.get("volume_id")
+                if vid:
+                    volume_ids.append(vid)
+
+            # ── Collect floating IPs ─────────────────────
+            server_ips = set()
+            for net_name, addrs in (server.addresses or {}).items():
+                for a in addrs:
+                    if a.get("addr"):
+                        server_ips.add(a["addr"])
+
+            fips_to_delete = []
+            try:
+                for fip in conn2.network.ips():
+                    if getattr(fip, "fixed_ip_address", None) in server_ips:
+                        fips_to_delete.append(fip)
+            except Exception as exc:
+                yield send("step", {"label": "Scan floating IPs", "status": "warning",
+                                    "detail": f"Could not scan: {exc}"})
+
+            # ── Send a "plan" event so the JS knows total steps ──
+            total = 1 + len(volume_ids) + len(fips_to_delete) * 2
+            yield send("plan", {"total": total, "name": instance_name,
+                                "volumes": len(volume_ids),
+                                "fips": len(fips_to_delete)})
+
+            # ── Step 1: Disassociate floating IPs ─────────
+            for fip in fips_to_delete:
+                fip_addr = getattr(fip, "floating_ip_address", fip.id)
+                try:
+                    conn2.network.update_ip(fip.id, port_id=None)
+                    yield send("step", {
+                        "label":  f"Disassociate {fip_addr}",
+                        "status": "ok",
+                        "detail": "Floating IP detached from port"
+                    })
+                except Exception as exc:
+                    yield send("step", {
+                        "label":  f"Disassociate {fip_addr}",
+                        "status": "warning",
+                        "detail": str(exc)
+                    })
+
+            # ── Step 2: Delete instance ───────────────────
+            try:
+                conn2.compute.delete_server(instance_id, ignore_missing=True)
+                conn2.compute.wait_for_delete(server)
+                yield send("step", {
+                    "label":  f"Delete instance '{instance_name}'",
+                    "status": "ok",
+                    "detail": "Instance terminated and removed"
+                })
+            except Exception as exc:
+                yield send("step", {
+                    "label":  f"Delete instance '{instance_name}'",
+                    "status": "error",
+                    "detail": str(exc)
+                })
+
+            # ── Step 3: Delete volumes ────────────────────
+            for vid in volume_ids:
+                try:
+                    vol = conn2.block_storage.get_volume(vid)
+                    if vol:
+                        vname = vol.name or vid
+                        vsize = vol.size
+                        conn2.block_storage.delete_volume(vid, ignore_missing=True)
+                        conn2.block_storage.wait_for_delete(vol)
+                        yield send("step", {
+                            "label":  f"Delete volume '{vname}'",
+                            "status": "ok",
+                            "detail": f"{vsize} GB freed"
+                        })
+                    else:
+                        yield send("step", {
+                            "label":  f"Delete volume {vid[:8]}…",
+                            "status": "warning",
+                            "detail": "Volume not found (already deleted)"
+                        })
+                except Exception as exc:
+                    yield send("step", {
+                        "label":  f"Delete volume {vid[:8]}…",
+                        "status": "error",
+                        "detail": str(exc)
+                    })
+
+            # ── Step 4: Release floating IPs ─────────────
+            for fip in fips_to_delete:
+                fip_addr = getattr(fip, "floating_ip_address", fip.id)
+                try:
+                    conn2.network.delete_ip(fip.id, ignore_missing=True)
+                    yield send("step", {
+                        "label":  f"Release {fip_addr}",
+                        "status": "ok",
+                        "detail": "Returned to floating IP pool"
+                    })
+                except Exception as exc:
+                    yield send("step", {
+                        "label":  f"Release {fip_addr}",
+                        "status": "warning",
+                        "detail": str(exc)
+                    })
+
+            yield send("done", {"ok": True, "name": instance_name})
+
         except Exception as exc:
-            step("Scan floating IPs", "warning", f"Could not scan: {exc}")
+            yield send("step", {"label": "Cleanup", "status": "error", "detail": str(exc)})
+            yield send("done", {"ok": False, "name": instance_id})
 
-        # ── Step 1: Disassociate floating IPs ────────────
-        for fip in fips_to_delete:
-            try:
-                conn.network.update_ip(fip.id, port_id=None)
-                step(
-                    f"Disassociate floating IP {fip.floating_ip_address}",
-                    "ok",
-                    "Detached from port"
-                )
-            except Exception as exc:
-                step(
-                    f"Disassociate floating IP {getattr(fip, 'floating_ip_address', fip.id)}",
-                    "warning",
-                    str(exc)
-                )
-
-        # ── Step 2: Delete instance ───────────────────────
-        try:
-            conn.compute.delete_server(instance_id, ignore_missing=True)
-            conn.compute.wait_for_delete(server)
-            step(f"Delete instance '{instance_name}'", "ok", "Instance terminated")
-        except Exception as exc:
-            step(f"Delete instance '{instance_name}'", "error", str(exc))
-
-        # ── Step 3: Delete volumes ────────────────────────
-        for vid in volume_ids:
-            try:
-                vol = conn.block_storage.get_volume(vid)
-                if vol:
-                    vname = vol.name or vid
-                    conn.block_storage.delete_volume(vid, ignore_missing=True)
-                    conn.block_storage.wait_for_delete(vol)
-                    step(f"Delete volume '{vname}'", "ok", f"{vol.size} GB freed")
-                else:
-                    step(f"Delete volume {vid}", "warning", "Volume not found (already gone)")
-            except Exception as exc:
-                step(f"Delete volume {vid}", "error", str(exc))
-
-        # ── Step 4: Delete floating IPs ──────────────────
-        for fip in fips_to_delete:
-            try:
-                conn.network.delete_ip(fip.id, ignore_missing=True)
-                step(
-                    f"Release floating IP {getattr(fip, 'floating_ip_address', fip.id)}",
-                    "ok",
-                    "Returned to pool"
-                )
-            except Exception as exc:
-                step(
-                    f"Release floating IP {getattr(fip, 'floating_ip_address', fip.id)}",
-                    "warning",
-                    str(exc)
-                )
-
-        return JsonResponse({
-            "ok":   True,
-            "name": instance_name,
-            "steps": steps,
-        })
-
-    except Exception as exc:
-        step("Cleanup", "error", str(exc))
-        return JsonResponse({"ok": False, "error": str(exc), "steps": steps})
+    response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"   # disable nginx buffering if proxied
+    return response
 
 
 # =========================================================

@@ -1424,7 +1424,7 @@
                             </td>
 
                             <td>
-                                {% if router.external_gateway_info and router.external_gateway_info.network_id %}
+                                {% if router.gw_network_id %}
                                     <span style="font-size:10px;color:#2563eb;font-weight:600;">✓ Set</span>
                                 {% else %}
                                     <span style="font-size:10px;color:#94a3b8;">None</span>

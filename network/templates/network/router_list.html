@@ -204,15 +204,15 @@
                         </td>
 
                         <td>
-                            {% if router.external_gateway_info and router.external_gateway_info.network_id %}
-                                <span class="mono">{{ router.external_gateway_info.network_id|truncatechars:20 }}</span>
+                            {% if router.gw_network_id %}
+                                <span class="mono">{{ router.gw_network_id|truncatechars:20 }}</span>
                             {% else %}
                                 <span style="color:#94a3b8;font-size:12px;">None</span>
                             {% endif %}
                         </td>
 
                         <td>
-                            {% if router.external_gateway_info and router.external_gateway_info.enable_snat %}
+                            {% if router.gw_snat %}
                                 <span class="status-badge s-active" style="font-size:10px;padding:4px 8px;">
                                     <span class="dot"></span>On
                                 </span>
@@ -224,12 +224,10 @@
                         </td>
 
                         <td>
-                            {% if router._ports %}
+                            {% if router.iface_ips %}
                                 <div class="iface-list">
-                                    {% for port in router._ports %}
-                                        {% for fip in port.fixed_ips %}
-                                            <span class="iface-pill">{{ fip.ip_address }}</span>
-                                        {% endfor %}
+                                    {% for ip in router.iface_ips %}
+                                        <span class="iface-pill">{{ ip }}</span>
                                     {% endfor %}
                                 </div>
                             {% else %}

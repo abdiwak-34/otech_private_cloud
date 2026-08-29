@@ -307,8 +307,8 @@
             <div class="info-item">
                 <span class="info-label">External Gateway</span>
                 <span class="info-value">
-                    {% if router.external_gateway_info and router.external_gateway_info.network_id %}
-                        <span class="mono">{{ router.external_gateway_info.network_id|truncatechars:20 }}</span>
+                    {% if router.gw_network_id %}
+                        <span class="mono">{{ router.gw_network_id|truncatechars:20 }}</span>
                     {% else %}
                         None
                     {% endif %}
@@ -318,11 +318,7 @@
             <div class="info-item">
                 <span class="info-label">SNAT</span>
                 <span class="info-value">
-                    {% if router.external_gateway_info and router.external_gateway_info.enable_snat %}
-                        Enabled
-                    {% else %}
-                        Disabled
-                    {% endif %}
+                    {% if router.gw_snat %}Enabled{% else %}Disabled{% endif %}
                 </span>
             </div>
 
@@ -360,7 +356,7 @@
                     <option value="">— Clear gateway (no external network) —</option>
                     {% for net in external_networks %}
                         <option value="{{ net.id }}"
-                            {% if router.external_gateway_info and router.external_gateway_info.network_id == net.id %}selected{% endif %}>
+                            {% if router.gw_network_id == net.id %}selected{% endif %}>
                             {{ net.name }} ({{ net.id|truncatechars:20 }})
                         </option>
                     {% endfor %}

@@ -11,28 +11,72 @@ def network_list(request):
     conn = get_openstack_connection()
 
     try:
-        networks = list(conn.network.networks())
+        raw_networks = list(conn.network.networks())
+        raw_routers  = list(conn.network.routers())
 
-        # Enrich each network with its subnets
-        for network in networks:
-            network._subnets = [
-                conn.network.get_subnet(sid)
-                for sid in (network.subnet_ids or [])
-            ]
+        # Build plain-dict list for networks so templates never
+        # touch underscore attributes on SDK objects.
+        networks = []
+        for net in raw_networks:
+            subnets = []
+            for sid in (net.subnet_ids or []):
+                try:
+                    s = conn.network.get_subnet(sid)
+                    if s:
+                        subnets.append({
+                            "id":   s.id,
+                            "name": s.name or "",
+                            "cidr": s.cidr or "",
+                        })
+                except Exception:
+                    pass
 
-        routers = list(conn.network.routers())
+            networks.append({
+                "id":                net.id,
+                "name":              net.name or "",
+                "status":            net.status or "",
+                "is_admin_state_up": net.is_admin_state_up,
+                "is_router_external": getattr(net, "is_router_external", False),
+                "is_shared":         getattr(net, "is_shared", False),
+                "subnet_ids":        net.subnet_ids or [],
+                "subnets":           subnets,
+            })
+
+        # Build plain-dict list for routers
+        routers = []
+        for rtr in raw_routers:
+            # Collect interface IPs from ports
+            iface_ips = []
+            try:
+                for port in conn.network.ports(device_id=rtr.id):
+                    if port.device_owner == "network:router_interface":
+                        for fip in port.fixed_ips:
+                            if fip.get("ip_address"):
+                                iface_ips.append(fip["ip_address"])
+            except Exception:
+                pass
+
+            gw_info = rtr.external_gateway_info or {}
+            routers.append({
+                "id":          rtr.id,
+                "name":        rtr.name or "",
+                "status":      rtr.status or "",
+                "gw_network_id": gw_info.get("network_id", ""),
+                "gw_snat":       gw_info.get("enable_snat", False),
+                "iface_ips":     iface_ips,
+            })
 
     except Exception as exc:
         messages.error(request, f"Failed to load networks: {exc}")
         networks = []
-        routers = []
+        routers  = []
 
     return render(
         request,
         "network/network_list.html",
         {
             "networks": networks,
-            "routers": routers,
+            "routers":  routers,
         },
     )
 
@@ -43,27 +87,24 @@ def network_list(request):
 
 def create_network(request):
     if request.method == "POST":
-        name         = request.POST.get("name", "").strip()
-        subnet_name  = request.POST.get("subnet_name", "").strip()
-        cidr         = request.POST.get("cidr", "").strip()
-        dns_servers  = request.POST.get("dns_servers", "").strip()
-        enable_dhcp  = request.POST.get("enable_dhcp") == "on"
+        name        = request.POST.get("name", "").strip()
+        subnet_name = request.POST.get("subnet_name", "").strip()
+        cidr        = request.POST.get("cidr", "").strip()
+        dns_servers = request.POST.get("dns_servers", "").strip()
+        enable_dhcp = request.POST.get("enable_dhcp") == "on"
 
         conn = get_openstack_connection()
 
         try:
-            # Create the network
             network = conn.network.create_network(name=name)
 
-            # Build subnet kwargs
             subnet_kwargs = {
-                "name":       subnet_name or f"{name}-subnet",
-                "network_id": network.id,
-                "ip_version": 4,
-                "cidr":       cidr,
+                "name":        subnet_name or f"{name}-subnet",
+                "network_id":  network.id,
+                "ip_version":  4,
+                "cidr":        cidr,
                 "enable_dhcp": enable_dhcp,
             }
-
             if dns_servers:
                 subnet_kwargs["dns_nameservers"] = [
                     s.strip() for s in dns_servers.split(",") if s.strip()
@@ -91,28 +132,63 @@ def network_detail(request, network_id):
     conn = get_openstack_connection()
 
     try:
-        network = conn.network.get_network(network_id)
+        net = conn.network.get_network(network_id)
 
-        if not network:
+        if not net:
             messages.error(request, "Network not found.")
             return redirect("network:list")
 
+        # Plain dict for the network itself
+        network = {
+            "id":                net.id,
+            "name":              net.name or "",
+            "status":            net.status or "",
+            "is_admin_state_up": net.is_admin_state_up,
+            "is_router_external": getattr(net, "is_router_external", False),
+            "is_shared":         getattr(net, "is_shared", False),
+            "subnet_ids":        net.subnet_ids or [],
+        }
+
         # Subnets
-        subnets = [
-            conn.network.get_subnet(sid)
-            for sid in (network.subnet_ids or [])
-        ]
+        subnets = []
+        for sid in (net.subnet_ids or []):
+            try:
+                s = conn.network.get_subnet(sid)
+                if s:
+                    subnets.append({
+                        "id":              s.id,
+                        "name":            s.name or "",
+                        "cidr":            s.cidr or "",
+                        "gateway_ip":      s.gateway_ip or "",
+                        "ip_version":      s.ip_version,
+                        "is_dhcp_enabled": s.is_dhcp_enabled,
+                    })
+            except Exception:
+                pass
 
-        # Ports on this network
-        ports = list(conn.network.ports(network_id=network_id))
+        # Ports
+        raw_ports = list(conn.network.ports(network_id=network_id))
 
-        # Instances (ports whose device_owner starts with compute)
-        instance_ports = [
-            p for p in ports
-            if p.device_owner and p.device_owner.startswith("compute:")
-        ]
+        ports = []
+        instance_ports = []
+        for p in raw_ports:
+            fixed_ips = [
+                {"ip_address": f.get("ip_address", ""), "subnet_id": f.get("subnet_id", "")}
+                for f in (p.fixed_ips or [])
+            ]
+            port_dict = {
+                "id":           p.id,
+                "mac_address":  p.mac_address or "",
+                "status":       p.status or "",
+                "device_owner": p.device_owner or "",
+                "device_id":    p.device_id or "",
+                "fixed_ips":    fixed_ips,
+            }
+            ports.append(port_dict)
+            if p.device_owner and p.device_owner.startswith("compute:"):
+                instance_ports.append(port_dict)
 
-        # Try to resolve instance names
+        # Resolve instance names
         server_map = {}
         try:
             for server in conn.compute.servers():
@@ -145,17 +221,15 @@ def delete_network(request, network_id):
     conn = get_openstack_connection()
 
     try:
-        network = conn.network.get_network(network_id)
-        network_name = network.name if network else network_id
+        net = conn.network.get_network(network_id)
+        network_name = net.name if net else network_id
     except Exception:
         network_name = network_id
 
     if request.method == "POST":
-        conn = get_openstack_connection()
         try:
-            # Delete subnets first, then network
-            network = conn.network.get_network(network_id)
-            for sid in network.subnet_ids or []:
+            net = conn.network.get_network(network_id)
+            for sid in (net.subnet_ids or []):
                 try:
                     conn.network.delete_subnet(sid, ignore_missing=True)
                 except Exception:
@@ -185,17 +259,29 @@ def router_list(request):
     conn = get_openstack_connection()
 
     try:
-        routers = list(conn.network.routers())
+        raw_routers = list(conn.network.routers())
 
-        # Attach interface / port info per router
-        for router in routers:
+        routers = []
+        for rtr in raw_routers:
+            iface_ips = []
             try:
-                router._ports = [
-                    p for p in conn.network.ports(device_id=router.id)
-                    if p.device_owner == "network:router_interface"
-                ]
+                for port in conn.network.ports(device_id=rtr.id):
+                    if port.device_owner == "network:router_interface":
+                        for fip in (port.fixed_ips or []):
+                            if fip.get("ip_address"):
+                                iface_ips.append(fip["ip_address"])
             except Exception:
-                router._ports = []
+                pass
+
+            gw_info = rtr.external_gateway_info or {}
+            routers.append({
+                "id":            rtr.id,
+                "name":          rtr.name or "",
+                "status":        rtr.status or "",
+                "gw_network_id": gw_info.get("network_id", ""),
+                "gw_snat":       gw_info.get("enable_snat", False),
+                "iface_ips":     iface_ips,
+            })
 
     except Exception as exc:
         messages.error(request, f"Failed to load routers: {exc}")
@@ -211,45 +297,33 @@ def router_list(request):
 def create_router(request):
     conn = get_openstack_connection()
 
-    # External networks for gateway selection
     try:
         external_networks = list(conn.network.networks(is_router_external=True))
         all_subnets       = list(conn.network.subnets())
-        # Only subnets on non-external networks
-        internal_subnets  = [
-            s for s in all_subnets
-            if not any(
-                n.id == s.network_id
-                for n in external_networks
-            )
-        ]
+        ext_ids           = {n.id for n in external_networks}
+        internal_subnets  = [s for s in all_subnets if s.network_id not in ext_ids]
     except Exception as exc:
         messages.error(request, f"Failed to load network data: {exc}")
         external_networks = []
         internal_subnets  = []
 
     if request.method == "POST":
-        name               = request.POST.get("name", "").strip()
-        external_net_id    = request.POST.get("external_network", "").strip()
-        subnet_id          = request.POST.get("subnet", "").strip()
+        name            = request.POST.get("name", "").strip()
+        external_net_id = request.POST.get("external_network", "").strip()
+        subnet_id       = request.POST.get("subnet", "").strip()
 
         try:
             router_kwargs = {"name": name}
-
             if external_net_id:
                 router_kwargs["external_gateway_info"] = {
-                    "network_id": external_net_id,
+                    "network_id":  external_net_id,
                     "enable_snat": True,
                 }
 
             router = conn.network.create_router(**router_kwargs)
 
-            # Attach subnet interface
             if subnet_id:
-                conn.network.add_interface_to_router(
-                    router.id,
-                    subnet_id=subnet_id,
-                )
+                conn.network.add_interface_to_router(router.id, subnet_id=subnet_id)
 
             messages.success(request, f"Router '{name}' created successfully.")
             return redirect("network:router_detail", router_id=router.id)
@@ -275,24 +349,32 @@ def router_detail(request, router_id):
     conn = get_openstack_connection()
 
     try:
-        router = conn.network.get_router(router_id)
+        rtr = conn.network.get_router(router_id)
 
-        if not router:
+        if not rtr:
             messages.error(request, "Router not found.")
             return redirect("network:router_list")
 
-        # Ports attached to this router
-        all_ports = list(conn.network.ports(device_id=router_id))
+        gw_info = rtr.external_gateway_info or {}
+        router = {
+            "id":              rtr.id,
+            "name":            rtr.name or "",
+            "status":          rtr.status or "",
+            "is_admin_state_up": rtr.is_admin_state_up,
+            "gw_network_id":   gw_info.get("network_id", ""),
+            "gw_snat":         gw_info.get("enable_snat", False),
+        }
 
+        # Interface ports → resolved to plain dicts
+        all_ports = list(conn.network.ports(device_id=router_id))
         interface_ports = [
             p for p in all_ports
             if p.device_owner == "network:router_interface"
         ]
 
-        # Resolve subnet + network names for each interface port
         interfaces = []
         for port in interface_ports:
-            for fixed_ip in port.fixed_ips:
+            for fixed_ip in (port.fixed_ips or []):
                 try:
                     subnet  = conn.network.get_subnet(fixed_ip["subnet_id"])
                     network = conn.network.get_network(subnet.network_id) if subnet else None
@@ -316,21 +398,24 @@ def router_detail(request, router_id):
                         "ip_address":   fixed_ip.get("ip_address", "-"),
                     })
 
-        # Subnets available to add (not already attached)
         attached_subnet_ids = {iface["subnet_id"] for iface in interfaces}
 
         try:
             external_networks = list(conn.network.networks(is_router_external=True))
             ext_net_ids       = {n.id for n in external_networks}
             available_subnets = [
-                s for s in conn.network.subnets()
+                {"id": s.id, "name": s.name or "", "cidr": s.cidr or ""}
+                for s in conn.network.subnets()
                 if s.id not in attached_subnet_ids
                 and s.network_id not in ext_net_ids
             ]
+            ext_nets_list = [
+                {"id": n.id, "name": n.name or ""}
+                for n in external_networks
+            ]
         except Exception:
             available_subnets = []
-            external_networks = []
-            ext_net_ids       = set()
+            ext_nets_list     = []
 
         return render(
             request,
@@ -339,7 +424,7 @@ def router_detail(request, router_id):
                 "router":            router,
                 "interfaces":        interfaces,
                 "available_subnets": available_subnets,
-                "external_networks": external_networks,
+                "external_networks": ext_nets_list,
             },
         )
 
@@ -356,23 +441,19 @@ def delete_router(request, router_id):
     conn = get_openstack_connection()
 
     try:
-        router      = conn.network.get_router(router_id)
-        router_name = router.name if router else router_id
+        rtr         = conn.network.get_router(router_id)
+        router_name = rtr.name if rtr else router_id
     except Exception:
         router_name = router_id
 
     if request.method == "POST":
-        conn = get_openstack_connection()
         try:
-            # Detach all interfaces first
-            ports = list(conn.network.ports(device_id=router_id))
-            for port in ports:
+            for port in conn.network.ports(device_id=router_id):
                 if port.device_owner == "network:router_interface":
-                    for fixed_ip in port.fixed_ips:
+                    for fip in (port.fixed_ips or []):
                         try:
                             conn.network.remove_interface_from_router(
-                                router_id,
-                                subnet_id=fixed_ip["subnet_id"],
+                                router_id, subnet_id=fip["subnet_id"]
                             )
                         except Exception:
                             pass
@@ -388,10 +469,7 @@ def delete_router(request, router_id):
     return render(
         request,
         "network/delete_router.html",
-        {
-            "router_id":   router_id,
-            "router_name": router_name,
-        },
+        {"router_id": router_id, "router_name": router_name},
     )
 
 
@@ -404,13 +482,11 @@ def add_router_interface(request, router_id):
         return redirect("network:router_detail", router_id=router_id)
 
     subnet_id = request.POST.get("subnet_id", "").strip()
-
     if not subnet_id:
         messages.error(request, "Please select a subnet.")
         return redirect("network:router_detail", router_id=router_id)
 
     conn = get_openstack_connection()
-
     try:
         conn.network.add_interface_to_router(router_id, subnet_id=subnet_id)
         subnet = conn.network.get_subnet(subnet_id)
@@ -433,13 +509,11 @@ def remove_router_interface(request, router_id):
         return redirect("network:router_detail", router_id=router_id)
 
     subnet_id = request.POST.get("subnet_id", "").strip()
-
     if not subnet_id:
         messages.error(request, "No subnet specified.")
         return redirect("network:router_detail", router_id=router_id)
 
     conn = get_openstack_connection()
-
     try:
         conn.network.remove_interface_from_router(router_id, subnet_id=subnet_id)
         messages.success(request, "Interface removed from router.")
@@ -464,17 +538,11 @@ def set_router_gateway(request, router_id):
         if external_net_id:
             conn.network.update_router(
                 router_id,
-                external_gateway_info={
-                    "network_id":  external_net_id,
-                    "enable_snat": True,
-                },
+                external_gateway_info={"network_id": external_net_id, "enable_snat": True},
             )
             messages.success(request, "Gateway set successfully.")
         else:
-            conn.network.update_router(
-                router_id,
-                external_gateway_info={},
-            )
+            conn.network.update_router(router_id, external_gateway_info={})
             messages.success(request, "Gateway cleared.")
     except Exception as exc:
         messages.error(request, f"Failed to update gateway: {exc}")
