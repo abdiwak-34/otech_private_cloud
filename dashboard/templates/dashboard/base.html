@@ -1,77 +1,192 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>{% block title %}OpenStack Dashboard{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OTech Cloud{% endblock %} — OTech Engineering &amp; Technology Solutions</title>
 
     <style>
 
+        /* ================================================
+           RESET + BASE
+           ================================================ */
+
+        *, *::before, *::after { box-sizing: border-box; }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            color: #222;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            min-height: 100vh;
         }
+
+
+        /* ================================================
+           NAVBAR
+           ================================================ */
 
         .navbar {
-            background: #111827;
-            padding: 18px 30px;
+            background: #0f172a;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 0 28px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
 
+
+        /* ---- Brand ---- */
+
         .brand {
-            font-size: 19px;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            flex-shrink: 0;
         }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            object-fit: contain;
+            background: white;
+            padding: 3px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+
+        .brand-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+        }
+
+        .brand-sub {
+            font-size: 10px;
+            font-weight: 500;
+            color: #60a5fa;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+
+        /* ---- Nav links ---- */
 
         .nav-links {
             display: flex;
-            gap: 25px;
+            align-items: center;
+            gap: 2px;
         }
 
         .nav-links a {
-            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 13px;
+            border-radius: 7px;
+            color: #94a3b8;
             text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
         }
 
         .nav-links a:hover {
-            color: white;
+            background: rgba(255,255,255,0.07);
+            color: #ffffff;
         }
 
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin-right: 25px;
-            font-weight: bold;
+        /* active state — added via Django template tag */
+        .nav-links a.active {
+            background: rgba(96,165,250,0.12);
+            color: #60a5fa;
         }
+
+        .nav-divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(255,255,255,0.08);
+            margin: 0 6px;
+        }
+
+        /* nav icon */
+        .ni {
+            font-size: 15px;
+            line-height: 1;
+        }
+
+
+        /* ---- Right side badge ---- */
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .cloud-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 12px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4ade80;
+            white-space: nowrap;
+        }
+
+        .online-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+
+        /* ================================================
+           PAGE CONTAINER
+           ================================================ */
 
         .container {
-            width: 90%;
-            max-width: 1200px;
+            width: 92%;
+            max-width: 1400px;
             margin: 30px auto;
         }
 
-        .card-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
 
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            flex: 1;
-            min-width: 200px;
-        }
+        /* ================================================
+           GLOBAL TABLE DEFAULTS
+           ================================================ */
 
         table {
             width: 100%;
@@ -81,16 +196,53 @@
 
         th, td {
             padding: 14px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e2e8f0;
             text-align: left;
         }
 
         th {
-            background: #e9ecef;
+            background: #f8fafc;
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
-        .status {
-            font-weight: bold;
+
+        /* ================================================
+           FOOTER BAR
+           ================================================ */
+
+        .page-footer {
+            text-align: center;
+            padding: 24px 20px 32px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .page-footer strong { color: #64748b; }
+
+
+        /* ================================================
+           RESPONSIVE
+           ================================================ */
+
+        @media (max-width: 900px) {
+            .brand-sub   { display: none; }
+            .nav-divider { display: none; }
+        }
+
+        @media (max-width: 700px) {
+            .navbar      { padding: 0 16px; height: 56px; }
+            .brand-name  { font-size: 13px; }
+            .nav-links a { padding: 6px 9px; font-size: 12px; }
+            .cloud-pill  { display: none; }
+            .container   { width: 96%; margin: 18px auto; }
+        }
+
+        @media (max-width: 520px) {
+            .brand-text  { display: none; }
         }
 
     </style>
@@ -101,27 +253,80 @@
 
 <nav class="navbar">
 
+    <!-- ── Brand ─────────────────────────────────────── -->
     <a href="{% url 'home' %}" class="brand">
-        ☁ OpenStack Dashboard
+
+        <img
+            src="{% static 'dashboard/images/logo.png' %}"
+            alt="OTech Logo"
+            class="brand-logo"
+        >
+
+        <div class="brand-text">
+            <span class="brand-name">OTech Engineering &amp; Technology Solutions PLC</span>
+            <span class="brand-sub">Private Cloud Platform</span>
+        </div>
+
     </a>
 
+
+    <!-- ── Nav links ──────────────────────────────────── -->
     <div class="nav-links">
 
-        <a href="{% url 'home' %}">Dashboard</a>
-        <a href="{% url 'instances' %}">Instances</a>
-        <a href="{% url 'images' %}">Images</a>
-        <a href="{% url 'network:list' %}">Networks</a>
-        <a href="{% url 'network:router_list' %}">Routers</a>
+        <a href="{% url 'home' %}"
+           {% if request.path == '/' %}class="active"{% endif %}>
+            <span class="ni">🏠</span> Dashboard
+        </a>
+
+        <a href="{% url 'instances' %}"
+           {% if '/instances/' in request.path and 'networks' not in request.path %}class="active"{% endif %}>
+            <span class="ni">🖥️</span> Instances
+        </a>
+
+        <a href="{% url 'images' %}"
+           {% if request.path == '/images/' %}class="active"{% endif %}>
+            <span class="ni">🖼️</span> Images
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <a href="{% url 'network:list' %}"
+           {% if '/networks/' in request.path and 'routers' not in request.path %}class="active"{% endif %}>
+            <span class="ni">🌐</span> Networks
+        </a>
+
+        <a href="{% url 'network:router_list' %}"
+           {% if 'routers' in request.path %}class="active"{% endif %}>
+            <span class="ni">🔀</span> Routers
+        </a>
+
+    </div>
+
+
+    <!-- ── Right side ─────────────────────────────────── -->
+    <div class="nav-right">
+
+        <div class="cloud-pill">
+            <span class="online-dot"></span>
+            OpenStack Online
+        </div>
 
     </div>
 
 </nav>
 
+
+<!-- ── Page content ─────────────────────────────────────── -->
 <div class="container">
+    {% block content %}{% endblock %}
+</div>
 
-    {% block content %}
-    {% endblock %}
 
+<!-- ── Footer ───────────────────────────────────────────── -->
+<div class="page-footer">
+    <strong>OTech Engineering &amp; Technology Solutions PLC</strong>
+    &nbsp;·&nbsp; Private Cloud Platform
+    &nbsp;·&nbsp; Powered by OpenStack
 </div>
 
 </body>
