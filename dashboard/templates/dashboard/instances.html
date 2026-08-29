@@ -207,20 +207,14 @@ Instances
                                     <span>View</span>
                                 </a>
 
-                                <!-- Cleanup -->
-                                <form
-                                    method="POST"
-                                    action="{% url 'cleanup' instance.id %}"
-                                    class="cleanup-form"
-                                    onsubmit="return confirm('This will delete the instance, its volumes, and floating IPs. Continue?');"
+                                <!-- Cleanup — link (GET) to the confirmation page -->
+                                <a
+                                    href="{% url 'cleanup' instance.id %}"
+                                    class="cleanup-button"
                                 >
-                                    {% csrf_token %}
-
-                                    <button type="submit" class="cleanup-button">
-                                        <span class="cleanup-icon">↻</span>
-                                        Cleanup
-                                    </button>
-                                </form>
+                                    <span class="cleanup-icon">↻</span>
+                                    Cleanup
+                                </a>
 
                             </div>
 
@@ -994,6 +988,7 @@ tbody tr:last-child td {
     font-size: 12px;
     font-weight: 600;
 
+    text-decoration: none;
     cursor: pointer;
 
     transition:
