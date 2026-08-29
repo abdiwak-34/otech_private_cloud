@@ -1,0 +1,625 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Networks & Routers{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.net-page {
+    max-width: 1350px;
+    margin: 0 auto;
+}
+
+/* =========================================================
+   PAGE HEADER
+   ========================================================= */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.page-title-group h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 750;
+    color: #0f172a;
+}
+
+.page-title-group p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 650;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover { transform: translateY(-1px); }
+
+.btn-primary   { background: #2563eb; color: white; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
+
+.btn-danger    { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+.btn-danger:hover { background: #ffe4e6; }
+
+.btn-sm { padding: 6px 10px; font-size: 11px; }
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.messages { margin-bottom: 20px; }
+
+.message {
+    padding: 13px 16px;
+    border-radius: 9px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.message.success  { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+.message.error    { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.message.warning  { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+.message.info     { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+
+/* =========================================================
+   SECTION CARDS
+   ========================================================= */
+
+.section-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(15,23,42,0.04);
+}
+
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.section-title h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #0f172a;
+}
+
+.section-title p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.count-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.tbl-wrap { overflow-x: auto; }
+
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.tbl th {
+    padding: 12px 20px;
+    text-align: left;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tbl td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover   { background: #fafcff; }
+
+/* =========================================================
+   NAME CELL
+   ========================================================= */
+
+.name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.item-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.item-name  { font-weight: 700; color: #0f172a; }
+.item-sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+/* =========================================================
+   STATUS / BADGES
+   ========================================================= */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.status-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.s-active   { background: #dcfce7; color: #166534; }
+.s-active .dot { background: #22c55e; }
+
+.s-down     { background: #f1f5f9; color: #475569; }
+.s-down .dot   { background: #94a3b8; }
+
+.s-error    { background: #fee2e2; color: #b91c1c; }
+.s-error .dot  { background: #ef4444; }
+
+.s-other    { background: #fef3c7; color: #92400e; }
+.s-other .dot  { background: #f59e0b; }
+
+.ext-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+.int-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+/* =========================================================
+   ID / MONO
+   ========================================================= */
+
+.mono {
+    font-family: monospace;
+    font-size: 11px;
+    color: #475569;
+}
+
+/* =========================================================
+   SUBNET PILLS
+   ========================================================= */
+
+.subnet-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.subnet-pill {
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: #f1f5f9;
+    color: #334155;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+/* =========================================================
+   ACTION ROW
+   ========================================================= */
+
+.action-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-cell {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.empty-cell .ei {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 14px;
+}
+
+.empty-cell h3 { margin: 0; color: #334155; font-size: 15px; }
+.empty-cell p  { margin: 6px 0 16px; color: #64748b; font-size: 13px; }
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+    .page-header   { flex-direction: column; align-items: flex-start; gap: 15px; }
+    .header-actions { width: 100%; }
+    .btn           { flex: 1; justify-content: center; }
+    .section-head  { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+</style>
+
+
+<div class="net-page">
+
+    <!-- ======================================================
+         HEADER
+         ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="page-title-group">
+            <h1>Networks &amp; Routers</h1>
+            <p>Manage Neutron virtual networks, subnets, and routers.</p>
+        </div>
+
+        <div class="header-actions">
+            <a href="{% url 'network:router_create' %}" class="btn btn-secondary">
+                🔀 New Router
+            </a>
+            <a href="{% url 'network:create' %}" class="btn btn-primary">
+                ＋ New Network
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         MESSAGES
+         ====================================================== -->
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!-- ======================================================
+         NETWORKS TABLE
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+
+            <div class="section-title">
+                <div class="section-icon">🌐</div>
+                <div>
+                    <h2>Networks</h2>
+                    <p>Neutron virtual networks and their subnets.</p>
+                </div>
+            </div>
+
+            <span class="count-badge">{{ networks|length }} network{{ networks|length|pluralize }}</span>
+
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Subnets (CIDR)</th>
+                        <th>ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for network in networks %}
+                    <tr>
+
+                        <!-- Name -->
+                        <td>
+                            <div class="name-cell">
+                                <div class="item-icon">🌐</div>
+                                <div>
+                                    <div class="item-name">{{ network.name|default:"(unnamed)" }}</div>
+                                    <div class="item-sub">
+                                        {% if network.is_admin_state_up %}Admin Up{% else %}Admin Down{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            {% if network.status == "ACTIVE" %}
+                                <span class="status-badge s-active"><span class="dot"></span>Active</span>
+                            {% elif network.status == "DOWN" %}
+                                <span class="status-badge s-down"><span class="dot"></span>Down</span>
+                            {% elif network.status == "ERROR" %}
+                                <span class="status-badge s-error"><span class="dot"></span>Error</span>
+                            {% else %}
+                                <span class="status-badge s-other"><span class="dot"></span>{{ network.status }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Type -->
+                        <td>
+                            {% if network.is_router_external %}
+                                <span class="ext-badge">External</span>
+                            {% else %}
+                                <span class="int-badge">Internal</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Subnets -->
+                        <td>
+                            {% if network._subnets %}
+                                <div class="subnet-list">
+                                    {% for subnet in network._subnets %}
+                                        <span class="subnet-pill" title="{{ subnet.name }}">{{ subnet.cidr }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span style="color:#94a3b8;font-size:12px;">No subnets</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ID -->
+                        <td><span class="mono">{{ network.id|truncatechars:22 }}</span></td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-row">
+                                <a href="{% url 'network:detail' network.id %}" class="btn btn-secondary btn-sm">
+                                    🔍 Detail
+                                </a>
+                                {% if not network.is_router_external %}
+                                <a href="{% url 'network:delete' network.id %}" class="btn btn-danger btn-sm">
+                                    🗑 Delete
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-cell">
+                                <div class="ei">🌐</div>
+                                <h3>No networks found</h3>
+                                <p>Create a private network to get started.</p>
+                                <a href="{% url 'network:create' %}" class="btn btn-primary">＋ Create Network</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         ROUTERS TABLE
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+
+            <div class="section-title">
+                <div class="section-icon">🔀</div>
+                <div>
+                    <h2>Routers</h2>
+                    <p>Neutron virtual routers connecting networks together.</p>
+                </div>
+            </div>
+
+            <span class="count-badge">{{ routers|length }} router{{ routers|length|pluralize }}</span>
+
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>External Gateway</th>
+                        <th>SNAT</th>
+                        <th>ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for router in routers %}
+                    <tr>
+
+                        <!-- Name -->
+                        <td>
+                            <div class="name-cell">
+                                <div class="item-icon">🔀</div>
+                                <div>
+                                    <div class="item-name">{{ router.name|default:"(unnamed)" }}</div>
+                                    <div class="item-sub">Router</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            {% if router.status == "ACTIVE" %}
+                                <span class="status-badge s-active"><span class="dot"></span>Active</span>
+                            {% elif router.status == "DOWN" %}
+                                <span class="status-badge s-down"><span class="dot"></span>Down</span>
+                            {% elif router.status == "ERROR" %}
+                                <span class="status-badge s-error"><span class="dot"></span>Error</span>
+                            {% else %}
+                                <span class="status-badge s-other"><span class="dot"></span>{{ router.status }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- External Gateway -->
+                        <td>
+                            {% if router.external_gateway_info and router.external_gateway_info.network_id %}
+                                <span class="mono">{{ router.external_gateway_info.network_id|truncatechars:18 }}</span>
+                            {% else %}
+                                <span style="color:#94a3b8;font-size:12px;">None</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- SNAT -->
+                        <td>
+                            {% if router.external_gateway_info and router.external_gateway_info.enable_snat %}
+                                <span class="status-badge s-active"><span class="dot"></span>Enabled</span>
+                            {% else %}
+                                <span class="status-badge s-down"><span class="dot"></span>Disabled</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ID -->
+                        <td><span class="mono">{{ router.id|truncatechars:22 }}</span></td>
+
+                        <!-- Actions -->
+                        <td>
+                            <div class="action-row">
+                                <a href="{% url 'network:router_detail' router.id %}" class="btn btn-secondary btn-sm">
+                                    🔍 Detail
+                                </a>
+                                <a href="{% url 'network:router_delete' router.id %}" class="btn btn-danger btn-sm">
+                                    🗑 Delete
+                                </a>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-cell">
+                                <div class="ei">🔀</div>
+                                <h3>No routers found</h3>
+                                <p>Create a router to connect your networks to an external gateway.</p>
+                                <a href="{% url 'network:router_create' %}" class="btn btn-primary">＋ Create Router</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

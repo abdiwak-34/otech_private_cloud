@@ -1,0 +1,499 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ router.name }} — Router Detail{% endblock %}
+
+{% block content %}
+
+<style>
+
+.detail-page { max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
+
+/* Header */
+.page-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 26px;
+}
+
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.back-btn {
+    width: 40px; height: 40px; border-radius: 9px;
+    background: #f1f5f9; color: #334155;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; font-size: 18px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover { background: #e2e8f0; transform: translateX(-3px); }
+
+.page-title h1 { margin: 0; font-size: 26px; font-weight: 750; color: #0f172a; }
+.page-title p  { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+
+/* Buttons */
+.btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 14px; border-radius: 8px;
+    font-size: 13px; font-weight: 650;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary   { background: #2563eb; color: white; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
+.btn-danger    { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+.btn-danger:hover { background: #ffe4e6; }
+.btn-sm { padding: 6px 10px; font-size: 11px; }
+
+/* Messages */
+.messages { margin-bottom: 18px; }
+.message  { padding: 13px 16px; border-radius: 9px; margin-bottom: 8px; font-size: 13px; font-weight: 500; }
+.message.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+.message.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.message.warning { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+.message.info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+
+/* Hero */
+.hero-card {
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 14px; padding: 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+}
+
+.hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 22px;
+}
+
+.hero-identity { display: flex; align-items: center; gap: 14px; }
+
+.hero-icon {
+    width: 54px; height: 54px; border-radius: 12px;
+    background: #eff6ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+}
+
+.hero-identity h2 { margin: 0; font-size: 20px; color: #0f172a; }
+.hero-identity p  { margin: 4px 0 0; color: #64748b; font-size: 13px; }
+
+.info-grid {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 13px;
+}
+
+.info-item {
+    padding: 15px; border-radius: 9px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+}
+
+.info-label { display: block; color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.info-value { display: block; color: #0f172a; font-size: 14px; font-weight: 650; word-break: break-all; }
+.mono       { font-family: monospace; font-size: 11px; color: #475569; }
+
+/* Status */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+}
+.status-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.s-active { background: #dcfce7; color: #166534; }
+.s-active .dot { background: #22c55e; }
+.s-down   { background: #f1f5f9; color: #475569; }
+.s-down .dot   { background: #94a3b8; }
+.s-error  { background: #fee2e2; color: #b91c1c; }
+.s-error .dot  { background: #ef4444; }
+.s-other  { background: #fef3c7; color: #92400e; }
+.s-other .dot  { background: #f59e0b; }
+
+/* Sections */
+.section-card {
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 14px; margin-bottom: 22px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(15,23,42,0.03);
+}
+
+.section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px; border-bottom: 1px solid #e2e8f0;
+}
+
+.section-title { display: flex; align-items: center; gap: 11px; }
+
+.s-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+}
+
+.section-title h2 { margin: 0; font-size: 15px; color: #0f172a; }
+.section-title p  { margin: 3px 0 0; color: #64748b; font-size: 12px; }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; min-width: 500px; }
+.tbl th {
+    padding: 12px 20px; text-align: left;
+    background: #f8fafc; color: #64748b;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8f0;
+}
+.tbl td {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155; font-size: 13px; vertical-align: middle;
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover   { background: #fafcff; }
+
+/* Empty */
+.empty-row { padding: 45px 20px; text-align: center; }
+.empty-row .ei {
+    width: 50px; height: 50px; border-radius: 11px;
+    background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin: 0 auto 13px;
+}
+.empty-row h3 { margin: 0; font-size: 14px; color: #334155; }
+.empty-row p  { margin: 5px 0 0; color: #64748b; font-size: 12px; }
+
+/* Add interface form */
+.add-iface-form {
+    padding: 20px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+}
+
+.add-iface-form label {
+    display: block; font-size: 12px; font-weight: 650;
+    color: #374151; margin-bottom: 7px;
+}
+
+.add-iface-form select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 13px; background: white;
+    outline: none; min-width: 280px;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+.add-iface-form select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* Gateway form */
+.gateway-form {
+    padding: 20px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+}
+
+.gateway-form label {
+    display: block; font-size: 12px; font-weight: 650;
+    color: #374151; margin-bottom: 7px;
+}
+
+.gateway-form select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 13px; background: white;
+    outline: none; min-width: 280px;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+.gateway-form select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .info-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 600px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .page-header  { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .section-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .hero-top     { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .add-iface-form,
+    .gateway-form { flex-direction: column; align-items: stretch; }
+    .add-iface-form select,
+    .gateway-form  select { min-width: unset; }
+}
+
+</style>
+
+
+<div class="detail-page">
+
+    <!-- ======================================================
+         HEADER
+         ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="header-left">
+            <a href="{% url 'network:router_list' %}" class="back-btn" title="Back to Routers">←</a>
+            <div class="page-title">
+                <h1>Router Detail</h1>
+                <p>Manage interfaces and gateway for this router.</p>
+            </div>
+        </div>
+
+        <a href="{% url 'network:router_delete' router.id %}" class="btn btn-danger">
+            🗑 Delete Router
+        </a>
+
+    </div>
+
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!-- ======================================================
+         HERO CARD
+         ====================================================== -->
+
+    <div class="hero-card">
+
+        <div class="hero-top">
+
+            <div class="hero-identity">
+                <div class="hero-icon">🔀</div>
+                <div>
+                    <h2>{{ router.name|default:"(unnamed)" }}</h2>
+                    <p>Neutron Virtual Router</p>
+                </div>
+            </div>
+
+            {% if router.status == "ACTIVE" %}
+                <span class="status-badge s-active"><span class="dot"></span>Active</span>
+            {% elif router.status == "DOWN" %}
+                <span class="status-badge s-down"><span class="dot"></span>Down</span>
+            {% elif router.status == "ERROR" %}
+                <span class="status-badge s-error"><span class="dot"></span>Error</span>
+            {% else %}
+                <span class="status-badge s-other"><span class="dot"></span>{{ router.status }}</span>
+            {% endif %}
+
+        </div>
+
+        <div class="info-grid">
+
+            <div class="info-item">
+                <span class="info-label">Router ID</span>
+                <span class="info-value mono">{{ router.id }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Admin State</span>
+                <span class="info-value">{% if router.is_admin_state_up %}Up{% else %}Down{% endif %}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">External Gateway</span>
+                <span class="info-value">
+                    {% if router.external_gateway_info and router.external_gateway_info.network_id %}
+                        <span class="mono">{{ router.external_gateway_info.network_id|truncatechars:20 }}</span>
+                    {% else %}
+                        None
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">SNAT</span>
+                <span class="info-value">
+                    {% if router.external_gateway_info and router.external_gateway_info.enable_snat %}
+                        Enabled
+                    {% else %}
+                        Disabled
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         GATEWAY MANAGEMENT
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+            <div class="section-title">
+                <div class="s-icon">🌍</div>
+                <div>
+                    <h2>External Gateway</h2>
+                    <p>Set or clear the router's external network gateway.</p>
+                </div>
+            </div>
+        </div>
+
+        <form
+            method="POST"
+            action="{% url 'network:router_set_gateway' router.id %}"
+            class="gateway-form"
+        >
+            {% csrf_token %}
+
+            <div>
+                <label for="external_network_id">External Network</label>
+                <select id="external_network_id" name="external_network_id">
+                    <option value="">— Clear gateway (no external network) —</option>
+                    {% for net in external_networks %}
+                        <option value="{{ net.id }}"
+                            {% if router.external_gateway_info and router.external_gateway_info.network_id == net.id %}selected{% endif %}>
+                            {{ net.name }} ({{ net.id|truncatechars:20 }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+                💾 Update Gateway
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- ======================================================
+         INTERFACES
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+            <div class="section-title">
+                <div class="s-icon">🔌</div>
+                <div>
+                    <h2>Interfaces</h2>
+                    <p>Subnets attached to this router as internal interfaces.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Network</th>
+                        <th>Subnet Name</th>
+                        <th>CIDR</th>
+                        <th>Router IP</th>
+                        <th>Subnet ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for iface in interfaces %}
+                    <tr>
+
+                        <td><strong>{{ iface.network_name }}</strong></td>
+
+                        <td>{{ iface.subnet_name }}</td>
+
+                        <td><span class="mono">{{ iface.subnet_cidr }}</span></td>
+
+                        <td><span class="mono">{{ iface.ip_address }}</span></td>
+
+                        <td><span class="mono">{{ iface.subnet_id|truncatechars:22 }}</span></td>
+
+                        <td>
+                            <form
+                                method="POST"
+                                action="{% url 'network:router_remove_interface' router.id %}"
+                                style="display:inline;"
+                            >
+                                {% csrf_token %}
+                                <input type="hidden" name="subnet_id" value="{{ iface.subnet_id }}">
+                                <button
+                                    type="submit"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Remove subnet {{ iface.subnet_name }} from this router?');"
+                                >
+                                    ✕ Remove
+                                </button>
+                            </form>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-row">
+                                <div class="ei">🔌</div>
+                                <h3>No interfaces</h3>
+                                <p>Attach a subnet below to start routing traffic.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+
+        <!-- ─── Add Interface form ─── -->
+
+        {% if available_subnets %}
+
+        <form
+            method="POST"
+            action="{% url 'network:router_add_interface' router.id %}"
+            class="add-iface-form"
+        >
+            {% csrf_token %}
+
+            <div style="flex:1;">
+                <label for="subnet_id">Add Subnet Interface</label>
+                <select id="subnet_id" name="subnet_id" required>
+                    <option value="">— Select a subnet —</option>
+                    {% for subnet in available_subnets %}
+                        <option value="{{ subnet.id }}">
+                            {{ subnet.name|default:"(unnamed)" }} — {{ subnet.cidr }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                ＋ Add Interface
+            </button>
+
+        </form>
+
+        {% else %}
+
+        <div style="padding:16px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
+            All available private subnets are already attached to this router.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

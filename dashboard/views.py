@@ -17,26 +17,89 @@ def get_openstack_connection():
 def home(request):
     conn = get_openstack_connection()
 
-    # Get all instances
-    instances = list(conn.compute.servers())
-
-    # Get all networks
-    networks = list(conn.network.networks())
-
-    # Get all volumes
-    volumes = list(conn.block_storage.volumes())
-
-    # Get all floating IPs
+    # ── Raw data ──────────────────────────────────────────
+    instances    = list(conn.compute.servers())
+    networks     = list(conn.network.networks())
+    volumes      = list(conn.block_storage.volumes())
     floating_ips = list(conn.network.ips())
+    routers      = list(conn.network.routers())
+
+    # ── Instance stats ────────────────────────────────────
+    instance_active  = sum(1 for s in instances if s.status == "ACTIVE")
+    instance_shutoff = sum(1 for s in instances if s.status == "SHUTOFF")
+    instance_error   = sum(1 for s in instances if s.status == "ERROR")
+    instance_other   = len(instances) - instance_active - instance_shutoff - instance_error
+
+    # Build a richer list for the recent-instances table (up to 8)
+    recent_instances = []
+    for server in instances[:8]:
+        addrs = []
+        if server.addresses:
+            for net_name, net_addrs in server.addresses.items():
+                for addr in net_addrs:
+                    if addr.get("addr"):
+                        addrs.append(addr["addr"])
+
+        flavor_name = "—"
+        if server.flavor:
+            flavor_name = (
+                server.flavor.get("original_name")
+                or server.flavor.get("id", "—")
+            )
+
+        recent_instances.append({
+            "id":        server.id,
+            "name":      server.name,
+            "status":    server.status,
+            "flavor":    flavor_name,
+            "addresses": addrs,
+            "created":   getattr(server, "created", None),
+        })
+
+    # ── Volume stats ──────────────────────────────────────
+    volume_available = sum(1 for v in volumes if v.status == "available")
+    volume_inuse     = sum(1 for v in volumes if v.status == "in-use")
+    volume_error     = sum(1 for v in volumes if v.status == "error")
+    volume_total_gb  = sum(getattr(v, "size", 0) or 0 for v in volumes)
+
+    # ── Network stats ─────────────────────────────────────
+    networks_external = sum(1 for n in networks if getattr(n, "is_router_external", False))
+    networks_internal = len(networks) - networks_external
+
+    # ── Floating IP stats ─────────────────────────────────
+    fip_assigned = sum(
+        1 for f in floating_ips
+        if getattr(f, "port_id", None) or getattr(f, "fixed_ip_address", None)
+    )
+    fip_free = len(floating_ips) - fip_assigned
 
     return render(
         request,
         "dashboard/home.html",
         {
-            "instances": instances,
-            "networks": networks,
-            "volumes": volumes,
+            # raw lists (for length filters in template)
+            "instances":    instances,
+            "networks":     networks,
+            "volumes":      volumes,
             "floating_ips": floating_ips,
+            "routers":      routers,
+            # instance breakdown
+            "instance_active":  instance_active,
+            "instance_shutoff": instance_shutoff,
+            "instance_error":   instance_error,
+            "instance_other":   instance_other,
+            "recent_instances": recent_instances,
+            # volume breakdown
+            "volume_available": volume_available,
+            "volume_inuse":     volume_inuse,
+            "volume_error":     volume_error,
+            "volume_total_gb":  volume_total_gb,
+            # network breakdown
+            "networks_external": networks_external,
+            "networks_internal": networks_internal,
+            # floating IP breakdown
+            "fip_assigned": fip_assigned,
+            "fip_free":     fip_free,
         }
     )
 
@@ -114,7 +177,7 @@ def cleanup_instance(request, instance_id):
                 "Instance was not found."
             )
 
-            return redirect("instance:list")
+            return redirect("instances")
 
 
         instance_name = server.name
@@ -307,7 +370,7 @@ def cleanup_instance(request, instance_id):
             f"Cleanup failed for instance: {exc}"
         )
 
-    return redirect("instance:list")
+    return redirect("instances")
 
 # =========================================================
 # IMAGES
@@ -328,18 +391,8 @@ def images(request):
 
 
 # =========================================================
-# NETWORKS
+# NETWORKS — redirect to the full network app
 # =========================================================
 
 def networks(request):
-    conn = get_openstack_connection()
-
-    network_list = conn.network.networks()
-
-    return render(
-        request,
-        "dashboard/networks.html",
-        {
-            "networks": network_list
-        }
-    )
+    return redirect("network:list")

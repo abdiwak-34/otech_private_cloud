@@ -1,0 +1,304 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Create Network{% endblock %}
+
+{% block content %}
+
+<style>
+
+.form-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+/* Header */
+.form-header { margin-bottom: 26px; }
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+.form-header h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 750;
+    color: #0f172a;
+}
+
+.form-header p {
+    margin: 7px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Messages */
+.messages { margin-bottom: 20px; }
+
+.message {
+    padding: 13px 16px;
+    border-radius: 9px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.message.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+
+/* Card */
+.form-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+}
+
+.form-card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 28px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.head-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: #dbeafe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.form-card-head h2 { margin: 0; font-size: 18px; color: #0f172a; }
+.form-card-head p  { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+
+/* Form body */
+.form-body { padding: 28px; }
+
+.form-section { margin-bottom: 32px; }
+
+.form-section h3 {
+    margin: 0 0 18px;
+    font-size: 15px;
+    font-weight: 650;
+    color: #374151;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.form-group { margin-bottom: 20px; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 13px;
+    font-weight: 650;
+    color: #374151;
+}
+
+.form-group label .req { color: #ef4444; margin-left: 3px; }
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.form-group .help { display: block; margin-top: 6px; color: #6b7280; font-size: 12px; }
+
+/* Checkbox */
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #2563eb;
+    flex-shrink: 0;
+}
+
+.checkbox-row span { font-size: 13px; color: #374151; }
+
+/* Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 22px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 650;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary   { background: #2563eb; color: white; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
+
+/* Mobile */
+@media (max-width: 600px) {
+    .form-body  { padding: 20px; }
+    .form-card-head { padding: 18px 20px; }
+    .form-actions { flex-direction: column-reverse; }
+    .btn { width: 100%; justify-content: center; }
+}
+
+</style>
+
+
+<div class="form-page">
+
+    <!-- Header -->
+    <div class="form-header">
+
+        <div class="breadcrumb">
+            <a href="{% url 'network:list' %}">Networks</a>
+            <span>/</span>
+            <span>Create</span>
+        </div>
+
+        <h1>Create Network</h1>
+        <p>Create a new Neutron private network with a subnet.</p>
+
+    </div>
+
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!-- Form Card -->
+    <div class="form-card">
+
+        <div class="form-card-head">
+            <div class="head-icon">🌐</div>
+            <div>
+                <h2>Network Configuration</h2>
+                <p>Define the network name, subnet CIDR, and DHCP settings.</p>
+            </div>
+        </div>
+
+        <div class="form-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- ─── Network ─── -->
+                <div class="form-section">
+
+                    <h3>Network</h3>
+
+                    <div class="form-group">
+                        <label for="name">Network Name <span class="req">*</span></label>
+                        <input type="text" id="name" name="name"
+                               placeholder="e.g. private-network" required>
+                        <span class="help">A unique name for the virtual network.</span>
+                    </div>
+
+                </div>
+
+
+                <!-- ─── Subnet ─── -->
+                <div class="form-section">
+
+                    <h3>Subnet</h3>
+
+                    <div class="form-group">
+                        <label for="subnet_name">Subnet Name</label>
+                        <input type="text" id="subnet_name" name="subnet_name"
+                               placeholder="e.g. private-subnet (optional)">
+                        <span class="help">Defaults to &lt;network-name&gt;-subnet if left blank.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cidr">CIDR <span class="req">*</span></label>
+                        <input type="text" id="cidr" name="cidr"
+                               placeholder="e.g. 192.168.100.0/24" required>
+                        <span class="help">The IP address range for this subnet in CIDR notation.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dns_servers">DNS Nameservers</label>
+                        <input type="text" id="dns_servers" name="dns_servers"
+                               placeholder="e.g. 8.8.8.8, 8.8.4.4">
+                        <span class="help">Comma-separated DNS server IPs. Leave blank to use defaults.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-row">
+                            <input type="checkbox" name="enable_dhcp" checked>
+                            <span>Enable DHCP — automatically assign IP addresses to instances on this subnet</span>
+                        </label>
+                    </div>
+
+                </div>
+
+
+                <!-- ─── Actions ─── -->
+                <div class="form-actions">
+                    <a href="{% url 'network:list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">🌐 Create Network</button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

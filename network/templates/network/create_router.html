@@ -1,0 +1,251 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Create Router{% endblock %}
+
+{% block content %}
+
+<style>
+
+.form-page { max-width: 860px; margin: 0 auto; padding-bottom: 50px; }
+
+.form-header { margin-bottom: 26px; }
+
+.breadcrumb {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13px; color: #64748b; margin-bottom: 10px;
+}
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+.form-header h1 { margin: 0; font-size: 30px; font-weight: 750; color: #0f172a; }
+.form-header p  { margin: 7px 0 0; color: #64748b; font-size: 14px; }
+
+.messages { margin-bottom: 20px; }
+.message  { padding: 13px 16px; border-radius: 9px; margin-bottom: 8px; font-size: 13px; }
+.message.error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+
+.form-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+}
+
+.form-card-head {
+    display: flex; align-items: center; gap: 14px;
+    padding: 22px 28px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.head-icon {
+    width: 46px; height: 46px; border-radius: 10px;
+    background: #dbeafe;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+}
+
+.form-card-head h2 { margin: 0; font-size: 18px; color: #0f172a; }
+.form-card-head p  { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+
+.form-body { padding: 28px; }
+
+.form-section { margin-bottom: 32px; }
+
+.form-section h3 {
+    margin: 0 0 18px;
+    font-size: 15px; font-weight: 650; color: #374151;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.form-group { margin-bottom: 20px; }
+
+.form-group label {
+    display: block; margin-bottom: 7px;
+    font-size: 13px; font-weight: 650; color: #374151;
+}
+
+.form-group label .req { color: #ef4444; margin-left: 3px; }
+
+.form-group input,
+.form-group select {
+    width: 100%; box-sizing: border-box;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 14px; background: white;
+    outline: none; transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.form-group .help { display: block; margin-top: 6px; color: #6b7280; font-size: 12px; }
+
+.optional-tag {
+    font-size: 11px; font-weight: 600;
+    color: #94a3b8; margin-left: 5px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+}
+
+.info-box {
+    display: flex; gap: 11px; padding: 14px;
+    border: 1px solid #bfdbfe; border-radius: 9px;
+    background: #eff6ff; color: #1e40af;
+    margin-bottom: 10px;
+}
+
+.info-box-icon { font-size: 18px; flex-shrink: 0; }
+.info-box p    { margin: 0; font-size: 13px; line-height: 1.6; }
+
+.form-actions {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding-top: 22px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 11px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 650;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+
+.btn-primary   { background: #2563eb; color: white; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
+
+@media (max-width: 600px) {
+    .form-body { padding: 20px; }
+    .form-card-head { padding: 18px 20px; }
+    .form-actions { flex-direction: column-reverse; }
+    .btn { width: 100%; justify-content: center; }
+}
+
+</style>
+
+
+<div class="form-page">
+
+    <div class="form-header">
+        <div class="breadcrumb">
+            <a href="{% url 'network:list' %}">Networks</a>
+            <span>/</span>
+            <a href="{% url 'network:router_list' %}">Routers</a>
+            <span>/</span>
+            <span>Create</span>
+        </div>
+        <h1>Create Router</h1>
+        <p>Create a new Neutron router, set an external gateway, and attach a private subnet.</p>
+    </div>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="form-card">
+
+        <div class="form-card-head">
+            <div class="head-icon">🔀</div>
+            <div>
+                <h2>Router Configuration</h2>
+                <p>Set the router name, its external gateway, and the private subnet to connect.</p>
+            </div>
+        </div>
+
+        <div class="form-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- ─── Name ─── -->
+                <div class="form-section">
+
+                    <h3>Basic Information</h3>
+
+                    <div class="form-group">
+                        <label for="name">Router Name <span class="req">*</span></label>
+                        <input type="text" id="name" name="name"
+                               placeholder="e.g. main-router" required>
+                        <span class="help">A unique, descriptive name for this router.</span>
+                    </div>
+
+                </div>
+
+
+                <!-- ─── Gateway ─── -->
+                <div class="form-section">
+
+                    <h3>External Gateway <span class="optional-tag">Optional</span></h3>
+
+                    <div class="info-box">
+                        <div class="info-box-icon">💡</div>
+                        <p>Connecting the router to an external network allows instances with floating IPs to reach the internet via SNAT.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="external_network">External Network</label>
+                        <select id="external_network" name="external_network">
+                            <option value="">— No external gateway —</option>
+                            {% for net in external_networks %}
+                                <option value="{{ net.id }}">{{ net.name }} ({{ net.id|truncatechars:20 }})</option>
+                            {% endfor %}
+                        </select>
+                        <span class="help">Select the public/external Neutron network to use as the gateway.</span>
+                    </div>
+
+                </div>
+
+
+                <!-- ─── Interface ─── -->
+                <div class="form-section">
+
+                    <h3>Attach Private Subnet <span class="optional-tag">Optional</span></h3>
+
+                    <div class="info-box">
+                        <div class="info-box-icon">💡</div>
+                        <p>Select a subnet from one of your private networks. The router will get a port on that subnet, enabling routing between the private and external networks.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subnet">Subnet</label>
+                        <select id="subnet" name="subnet">
+                            <option value="">— No subnet (add later) —</option>
+                            {% for subnet in internal_subnets %}
+                                <option value="{{ subnet.id }}">
+                                    {{ subnet.name|default:"(unnamed)" }} — {{ subnet.cidr }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help">You can also add/remove interfaces from the router detail page.</span>
+                    </div>
+
+                </div>
+
+
+                <!-- ─── Actions ─── -->
+                <div class="form-actions">
+                    <a href="{% url 'network:router_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">🔀 Create Router</button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

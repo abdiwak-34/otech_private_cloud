@@ -1,0 +1,152 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Delete Router{% endblock %}
+
+{% block content %}
+
+<style>
+
+.del-page {
+    max-width: 620px;
+    margin: 40px auto;
+    padding: 0 15px;
+}
+
+.breadcrumb {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13px; color: #64748b;
+    margin-bottom: 20px;
+}
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+
+.del-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 40px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+    text-align: center;
+}
+
+.warn-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: #fee2e2; color: #dc2626;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 700;
+    border: 7px solid #fef2f2;
+    margin: 0 auto 20px;
+}
+
+.del-card h1 { margin: 0; font-size: 24px; font-weight: 700; color: #111827; }
+.sub-msg     { margin: 10px 0 24px; color: #64748b; font-size: 14px; }
+
+.item-box {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px; margin-bottom: 18px;
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    background: #f8fafc; text-align: left;
+}
+
+.item-box-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: #dbeafe;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+
+.item-box-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 600; display: block; }
+.item-box-name  { font-size: 14px; font-weight: 700; color: #111827; display: block; }
+.item-box-id    { font-family: monospace; font-size: 11px; color: #64748b; display: block; margin-top: 2px; }
+
+.warn-box {
+    display: flex; gap: 11px;
+    padding: 14px; margin-bottom: 20px;
+    border: 1px solid #fed7aa; border-radius: 9px;
+    background: #fff7ed; color: #9a3412; text-align: left;
+}
+
+.warn-box-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #f97316; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+
+.warn-box strong { font-size: 13px; }
+.warn-box p      { margin: 4px 0 0; font-size: 12px; line-height: 1.5; }
+
+.form-actions {
+    display: flex; justify-content: center; gap: 12px;
+    padding-top: 5px;
+}
+
+.btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 11px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 650;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+
+.btn-secondary { background: white; color: #374151; border-color: #d1d5db; }
+.btn-secondary:hover { background: #f9fafb; }
+
+.btn-danger { background: #dc2626; color: white; border-color: #dc2626; }
+.btn-danger:hover { background: #b91c1c; }
+
+@media (max-width: 600px) {
+    .del-card    { padding: 25px 18px; }
+    .form-actions { flex-direction: column-reverse; }
+    .btn          { width: 100%; justify-content: center; }
+}
+
+</style>
+
+
+<div class="del-page">
+
+    <div class="breadcrumb">
+        <a href="{% url 'network:list' %}">Networks</a>
+        <span>/</span>
+        <a href="{% url 'network:router_list' %}">Routers</a>
+        <span>/</span>
+        <span>Delete</span>
+    </div>
+
+    <div class="del-card">
+
+        <div class="warn-icon">!</div>
+
+        <h1>Delete Router?</h1>
+        <p class="sub-msg">Are you sure you want to delete this router?</p>
+
+        <div class="item-box">
+            <div class="item-box-icon">🔀</div>
+            <div>
+                <span class="item-box-label">Router</span>
+                <span class="item-box-name">{{ router_name }}</span>
+                <span class="item-box-id">{{ router_id }}</span>
+            </div>
+        </div>
+
+        <div class="warn-box">
+            <div class="warn-box-icon">!</div>
+            <div>
+                <strong>All interfaces will be detached automatically.</strong>
+                <p>The router's subnet interfaces will be removed before deleting the router. Floating IPs and instances are not affected.</p>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-actions">
+                <a href="{% url 'network:router_detail' router_id %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-danger">🗑 Yes, Delete Router</button>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

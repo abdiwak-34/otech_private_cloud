@@ -1,0 +1,524 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ network.name }} — Network Detail{% endblock %}
+
+{% block content %}
+
+<style>
+
+.detail-page { max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
+.header-left { display: flex; align-items: center; gap: 14px; }
+
+.back-btn {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    background: #f1f5f9;
+    color: #334155;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover { background: #e2e8f0; transform: translateX(-3px); }
+
+.page-title h1 { margin: 0; font-size: 26px; font-weight: 750; color: #0f172a; }
+.page-title p  { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+
+/* Buttons */
+.btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 14px;
+    border-radius: 8px; font-size: 13px; font-weight: 650;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-danger    { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+.btn-danger:hover { background: #ffe4e6; }
+
+/* Messages */
+.messages { margin-bottom: 18px; }
+.message { padding: 13px 16px; border-radius: 9px; margin-bottom: 8px; font-size: 13px; }
+.message.success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; }
+.message.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+
+/* Hero card */
+.hero-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+}
+
+.hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 22px;
+}
+
+.hero-identity { display: flex; align-items: center; gap: 14px; }
+
+.hero-icon {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    background: #eff6ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+}
+
+.hero-identity h2 { margin: 0; font-size: 20px; color: #0f172a; }
+.hero-identity p  { margin: 4px 0 0; color: #64748b; font-size: 13px; }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 13px;
+}
+
+.info-item {
+    padding: 15px;
+    border-radius: 9px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.info-label { display: block; color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.info-value { display: block; color: #0f172a; font-size: 14px; font-weight: 650; word-break: break-word; }
+.mono       { font-family: monospace; font-size: 11px; color: #475569; }
+
+/* Status badge */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+}
+.status-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.s-active { background: #dcfce7; color: #166534; }
+.s-active .dot { background: #22c55e; }
+.s-down   { background: #f1f5f9; color: #475569; }
+.s-down .dot   { background: #94a3b8; }
+.s-error  { background: #fee2e2; color: #b91c1c; }
+.s-error .dot  { background: #ef4444; }
+.s-other  { background: #fef3c7; color: #92400e; }
+.s-other .dot  { background: #f59e0b; }
+
+/* Sections */
+.section-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(15,23,42,0.03);
+}
+
+.section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.section-title { display: flex; align-items: center; gap: 11px; }
+
+.s-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+}
+
+.section-title h2 { margin: 0; font-size: 15px; color: #0f172a; }
+.section-title p  { margin: 3px 0 0; color: #64748b; font-size: 12px; }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; }
+
+.tbl { width: 100%; border-collapse: collapse; min-width: 500px; }
+
+.tbl th {
+    padding: 12px 20px; text-align: left;
+    background: #f8fafc; color: #64748b;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tbl td {
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155; font-size: 13px; vertical-align: middle;
+}
+
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover   { background: #fafcff; }
+
+/* Empty */
+.empty-row { padding: 45px 20px; text-align: center; }
+.empty-row .ei {
+    width: 50px; height: 50px;
+    border-radius: 11px; background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin: 0 auto 13px;
+}
+.empty-row h3 { margin: 0; font-size: 14px; color: #334155; }
+.empty-row p  { margin: 5px 0 0; color: #64748b; font-size: 12px; }
+
+/* Ext / Int badge */
+.tag {
+    display: inline-block;
+    padding: 3px 7px; border-radius: 5px;
+    font-size: 10px; font-weight: 700;
+}
+.tag-ext { background: #fef3c7; color: #92400e; }
+.tag-int { background: #eff6ff; color: #1d4ed8; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .info-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .hero-top    { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+</style>
+
+
+<div class="detail-page">
+
+    <!-- ======================================================
+         HEADER
+         ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="header-left">
+
+            <a href="{% url 'network:list' %}" class="back-btn" title="Back to Networks">←</a>
+
+            <div class="page-title">
+                <h1>Network Detail</h1>
+                <p>Subnets, ports, and instances connected to this network.</p>
+            </div>
+
+        </div>
+
+        {% if not network.is_router_external %}
+        <a href="{% url 'network:delete' network.id %}" class="btn btn-danger">
+            🗑 Delete Network
+        </a>
+        {% endif %}
+
+    </div>
+
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!-- ======================================================
+         HERO CARD
+         ====================================================== -->
+
+    <div class="hero-card">
+
+        <div class="hero-top">
+
+            <div class="hero-identity">
+                <div class="hero-icon">🌐</div>
+                <div>
+                    <h2>{{ network.name|default:"(unnamed)" }}</h2>
+                    <p>
+                        Neutron Network
+                        {% if network.is_router_external %}
+                            &nbsp;<span class="tag tag-ext">External</span>
+                        {% else %}
+                            &nbsp;<span class="tag tag-int">Internal</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            {% if network.status == "ACTIVE" %}
+                <span class="status-badge s-active"><span class="dot"></span>Active</span>
+            {% elif network.status == "DOWN" %}
+                <span class="status-badge s-down"><span class="dot"></span>Down</span>
+            {% elif network.status == "ERROR" %}
+                <span class="status-badge s-error"><span class="dot"></span>Error</span>
+            {% else %}
+                <span class="status-badge s-other"><span class="dot"></span>{{ network.status }}</span>
+            {% endif %}
+
+        </div>
+
+        <div class="info-grid">
+
+            <div class="info-item">
+                <span class="info-label">Network ID</span>
+                <span class="info-value mono">{{ network.id }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Admin State</span>
+                <span class="info-value">{% if network.is_admin_state_up %}Up{% else %}Down{% endif %}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Shared</span>
+                <span class="info-value">{% if network.is_shared %}Yes{% else %}No{% endif %}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Subnets</span>
+                <span class="info-value">{{ subnets|length }}</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         SUBNETS
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+            <div class="section-title">
+                <div class="s-icon">📋</div>
+                <div>
+                    <h2>Subnets</h2>
+                    <p>IP ranges allocated to this network.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>CIDR</th>
+                        <th>Gateway</th>
+                        <th>DHCP</th>
+                        <th>IP Version</th>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subnet in subnets %}
+                    <tr>
+                        <td><strong>{{ subnet.name|default:"(unnamed)" }}</strong></td>
+                        <td><span class="mono">{{ subnet.cidr }}</span></td>
+                        <td><span class="mono">{{ subnet.gateway_ip|default:"-" }}</span></td>
+                        <td>
+                            {% if subnet.is_dhcp_enabled %}
+                                <span class="status-badge s-active" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>Enabled
+                                </span>
+                            {% else %}
+                                <span class="status-badge s-down" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>Disabled
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>IPv{{ subnet.ip_version }}</td>
+                        <td><span class="mono">{{ subnet.id|truncatechars:20 }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-row">
+                                <div class="ei">📋</div>
+                                <h3>No subnets</h3>
+                                <p>This network has no subnets configured.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         INSTANCES ON THIS NETWORK
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+            <div class="section-title">
+                <div class="s-icon">🖥️</div>
+                <div>
+                    <h2>Connected Instances</h2>
+                    <p>Virtual machines with ports on this network.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Instance Name</th>
+                        <th>Port ID</th>
+                        <th>IP Addresses</th>
+                        <th>MAC Address</th>
+                        <th>Port Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for port in instance_ports %}
+                    <tr>
+                        <td>
+                            <strong>
+                                {{ server_map|default_if_none:"" }}
+                                {% if port.device_id in server_map %}
+                                    {{ server_map|dictsort:"0" }}
+                                {% endif %}
+                                {% for sid, sname in server_map.items %}
+                                    {% if sid == port.device_id %}{{ sname }}{% endif %}
+                                {% endfor %}
+                            </strong>
+                            <div class="mono">{{ port.device_id|truncatechars:20 }}</div>
+                        </td>
+                        <td><span class="mono">{{ port.id|truncatechars:20 }}</span></td>
+                        <td>
+                            {% for fip in port.fixed_ips %}
+                                <span class="mono" style="display:block;">{{ fip.ip_address }}</span>
+                            {% endfor %}
+                        </td>
+                        <td><span class="mono">{{ port.mac_address }}</span></td>
+                        <td>
+                            {% if port.status == "ACTIVE" %}
+                                <span class="status-badge s-active" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge s-down" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>{{ port.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if port.device_id %}
+                                <a href="{% url 'instance:detail' port.device_id %}"
+                                   style="color:#2563eb;font-size:12px;text-decoration:none;">
+                                    🔍 View Instance
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-row">
+                                <div class="ei">🖥️</div>
+                                <h3>No instances connected</h3>
+                                <p>No virtual machines are currently using this network.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         ALL PORTS
+         ====================================================== -->
+
+    <div class="section-card">
+
+        <div class="section-head">
+            <div class="section-title">
+                <div class="s-icon">🔌</div>
+                <div>
+                    <h2>All Ports</h2>
+                    <p>Every port attached to this network.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Port ID</th>
+                        <th>IP Address</th>
+                        <th>MAC</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for port in ports %}
+                    <tr>
+                        <td><span class="mono">{{ port.id|truncatechars:22 }}</span></td>
+                        <td>
+                            {% for fip in port.fixed_ips %}
+                                <span class="mono" style="display:block;">{{ fip.ip_address }}</span>
+                            {% empty %}
+                                <span style="color:#94a3b8;font-size:12px;">—</span>
+                            {% endfor %}
+                        </td>
+                        <td><span class="mono">{{ port.mac_address }}</span></td>
+                        <td><span style="font-size:12px;color:#475569;">{{ port.device_owner|default:"—" }}</span></td>
+                        <td>
+                            {% if port.status == "ACTIVE" %}
+                                <span class="status-badge s-active" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge s-down" style="font-size:10px;padding:4px 8px;">
+                                    <span class="dot"></span>{{ port.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-row">
+                                <div class="ei">🔌</div>
+                                <h3>No ports</h3>
+                                <p>No ports exist on this network.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
