@@ -12,4 +12,10 @@ urlpatterns = [
 
     path('networks/', views.networks, name='networks'),
 
+    path(
+        "instances/<str:instance_id>/cleanup/",
+        views.cleanup_instance,
+        name="cleanup",
+    ),
+
 ]

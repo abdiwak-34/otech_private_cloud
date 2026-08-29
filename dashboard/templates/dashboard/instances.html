@@ -208,13 +208,19 @@ Instances
                                 </a>
 
                                 <!-- Delete -->
-                                <a
-                                    href="{% url 'instance:delete' instance.id %}"
-                                    class="delete-button"
+                                <form
+                                    method="POST"
+                                    action="{% url 'instance:cleanup' instance_id %}"
+                                    class="cleanup-form"
+                                    onsubmit="return confirmCleanup('{{ instance.name|escapejs }}');"
                                 >
-                                    <span class="delete-icon">×</span>
-                                    Delete
-                                </a>
+                                    {% csrf_token %}
+
+                                    <button type="submit" class="cleanup-button">
+                                        <span class="cleanup-icon">↻</span>
+                                        Cleanup
+                                    </button>
+                                </form>
 
                             </div>
 
