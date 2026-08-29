@@ -10,12 +10,17 @@ urlpatterns = [
 
     path('images/', views.images, name='images'),
 
-    path('networks/', views.networks, name='networks'),
-
+    # Cleanup — dedicated progress page (GET) + execute (POST)
     path(
         "instances/<str:instance_id>/cleanup/",
         views.cleanup_instance,
         name="cleanup",
     ),
 
+    # AJAX status endpoint polled by the progress page
+    path(
+        "instances/<str:instance_id>/cleanup/status/",
+        views.cleanup_status,
+        name="cleanup_status",
+    ),
 ]

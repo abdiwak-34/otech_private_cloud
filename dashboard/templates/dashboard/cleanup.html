@@ -1,0 +1,846 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Cleanup — {{ instance_name }}{% endblock %}
+
+{% block content %}
+<style>
+
+/* ============================================================
+   PAGE SHELL
+   ============================================================ */
+.cleanup-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+}
+
+/* ============================================================
+   BREADCRUMB
+   ============================================================ */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 22px;
+}
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ============================================================
+   HEADER CARD
+   ============================================================ */
+.header-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.warn-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 4px solid #fef9c3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(245,158,11,0.2);
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.header-text p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+/* Instance info row */
+.instance-info-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.ii-item {}
+.ii-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+.ii-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.ii-value.mono { font-family: monospace; font-size: 11px; color: #475569; }
+
+/* Status pill */
+.s-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.s-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+.sp-active  { background: #dcfce7; color: #166534; }
+.sp-active .dot { background: #22c55e; }
+.sp-shutoff { background: #f1f5f9; color: #475569; }
+.sp-shutoff .dot { background: #94a3b8; }
+.sp-other   { background: #fef3c7; color: #92400e; }
+.sp-other .dot { background: #f59e0b; }
+
+/* Scope section */
+.scope-section {
+    margin-bottom: 0;
+}
+.scope-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.scope-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scope-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
+.scope-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.scope-icon.red    { background: #fee2e2; }
+.scope-icon.amber  { background: #fef3c7; }
+.scope-icon.blue   { background: #dbeafe; }
+.scope-icon.violet { background: #f5f3ff; }
+
+.scope-details { flex: 1; min-width: 0; }
+.scope-details strong { display: block; font-size: 13px; color: #0f172a; }
+.scope-details span   { font-size: 11px; color: #94a3b8; }
+
+.scope-count {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* ============================================================
+   WARNING BOX
+   ============================================================ */
+.warning-box {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    margin-bottom: 22px;
+}
+.warning-box-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.warning-box p { margin: 0; font-size: 13px; line-height: 1.6; }
+.warning-box strong { display: block; margin-bottom: 3px; font-size: 13px; }
+
+/* ============================================================
+   CONFIRM ACTIONS
+   ============================================================ */
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 20px;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn:hover { transform: translateY(-1px); }
+
+.btn-cancel {
+    background: white;
+    color: #374151;
+    border-color: #d1d5db;
+}
+.btn-cancel:hover { background: #f9fafb; }
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+}
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+    box-shadow: 0 6px 16px rgba(220,38,38,0.4);
+}
+
+/* ============================================================
+   PROGRESS PANEL  (hidden initially, shown when cleanup runs)
+   ============================================================ */
+.progress-panel {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+    display: none;
+    margin-top: 22px;
+}
+
+.progress-panel-head {
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 60%, #2563eb 100%);
+    color: white;
+}
+
+.progress-panel-head h2 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.progress-panel-head p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Overall progress bar */
+.overall-progress-wrap {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.overall-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.overall-label span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.overall-track {
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.overall-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #06b6d4);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Steps list */
+.steps-list {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid #f8fafc;
+    opacity: 0.35;
+    transition: opacity 0.3s;
+}
+
+.step-item:last-child { border-bottom: none; }
+.step-item.active     { opacity: 1; }
+.step-item.done       { opacity: 1; }
+.step-item.warning    { opacity: 1; }
+.step-item.failed     { opacity: 1; }
+
+/* Step icon bubble */
+.step-bubble {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.bubble-pending { background: #f1f5f9; color: #94a3b8; border: 2px solid #e2e8f0; }
+.bubble-active  { background: #dbeafe; color: #2563eb; border: 2px solid #93c5fd;
+                  animation: spin-ring 1.2s linear infinite; }
+.bubble-done    { background: #dcfce7; color: #16a34a; border: 2px solid #86efac; }
+.bubble-warning { background: #fef3c7; color: #d97706; border: 2px solid #fde68a; }
+.bubble-error   { background: #fee2e2; color: #dc2626; border: 2px solid #fca5a5; }
+
+@keyframes spin-ring {
+    0%   { box-shadow: 0 0 0 2px rgba(37,99,235,0.3); }
+    50%  { box-shadow: 0 0 0 6px rgba(37,99,235,0.08); }
+    100% { box-shadow: 0 0 0 2px rgba(37,99,235,0.3); }
+}
+
+/* Step text */
+.step-content { flex: 1; min-width: 0; padding-top: 6px; }
+
+.step-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 3px;
+}
+
+.step-detail {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.step-detail.ok      { color: #16a34a; }
+.step-detail.warning { color: #d97706; }
+.step-detail.error   { color: #dc2626; }
+
+/* Step timestamp */
+.step-time {
+    font-size: 10px;
+    color: #cbd5e1;
+    padding-top: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   RESULT BANNER  (shown after completion)
+   ============================================================ */
+.result-banner {
+    margin: 0 24px 24px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+}
+
+.result-banner.success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.result-banner.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+.result-banner-icon { font-size: 24px; flex-shrink: 0; }
+
+.result-banner strong { display: block; font-size: 15px; font-weight: 800; }
+.result-banner p      { margin: 3px 0 0; font-size: 13px; opacity: 0.85; }
+
+.result-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-sm { padding: 8px 14px; font-size: 12px; }
+
+.btn-outline {
+    background: white;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+.btn-outline:hover { background: #eff6ff; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+    .instance-info-row { grid-template-columns: 1fr; }
+    .confirm-actions   { flex-direction: column-reverse; }
+    .btn               { width: 100%; justify-content: center; }
+    .progress-panel-head { padding: 16px 18px; }
+    .steps-list        { padding: 12px 18px; }
+}
+
+</style>
+
+
+<div class="cleanup-page">
+
+    <!-- breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{% url 'instances' %}">Instances</a>
+        <span>/</span>
+        <a href="{% url 'instance:detail' instance_id %}">{{ instance_name }}</a>
+        <span>/</span>
+        <span>Cleanup</span>
+    </div>
+
+
+    <!-- ── Header card (confirmation state) ──────────────── -->
+    <div class="header-card" id="confirm-card">
+
+        <div class="header-top">
+            <div class="warn-circle">⚠️</div>
+            <div class="header-text">
+                <h1>Cleanup Instance</h1>
+                <p>This will permanently delete the instance and all its associated resources.</p>
+            </div>
+        </div>
+
+        <!-- Instance snapshot -->
+        <div class="instance-info-row">
+
+            <div class="ii-item">
+                <span class="ii-label">Instance Name</span>
+                <span class="ii-value">{{ instance_name }}</span>
+            </div>
+
+            <div class="ii-item">
+                <span class="ii-label">Status</span>
+                <span class="ii-value">
+                    {% if instance_status == "ACTIVE" %}
+                        <span class="s-pill sp-active"><span class="dot"></span>Active</span>
+                    {% elif instance_status == "SHUTOFF" %}
+                        <span class="s-pill sp-shutoff"><span class="dot"></span>Shutoff</span>
+                    {% else %}
+                        <span class="s-pill sp-other"><span class="dot"></span>{{ instance_status }}</span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="ii-item">
+                <span class="ii-label">Flavor</span>
+                <span class="ii-value">{{ flavor_name }}</span>
+            </div>
+
+            <div class="ii-item">
+                <span class="ii-label">ID</span>
+                <span class="ii-value mono">{{ instance_id }}</span>
+            </div>
+
+            <div class="ii-item">
+                <span class="ii-label">IP Addresses</span>
+                <span class="ii-value" style="font-size:12px;">
+                    {% for addr in addresses %}{{ addr }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                </span>
+            </div>
+
+        </div>
+
+        <!-- What will be deleted -->
+        <div class="scope-section">
+
+            <div class="scope-title">Resources that will be deleted</div>
+
+            <div class="scope-list">
+
+                <!-- Instance itself -->
+                <div class="scope-item">
+                    <div class="scope-icon red">🖥️</div>
+                    <div class="scope-details">
+                        <strong>Instance</strong>
+                        <span>{{ instance_name }} will be terminated</span>
+                    </div>
+                    <div class="scope-count">1</div>
+                </div>
+
+                <!-- Volumes -->
+                <div class="scope-item">
+                    <div class="scope-icon amber">💾</div>
+                    <div class="scope-details">
+                        <strong>Attached Volumes</strong>
+                        <span>
+                            {% if volumes_info %}
+                                {% for vol in volumes_info %}{{ vol.name }} ({{ vol.size }} GB){% if not forloop.last %}, {% endif %}{% endfor %}
+                            {% else %}
+                                No volumes attached
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="scope-count">{{ volumes_info|length }}</div>
+                </div>
+
+                <!-- Floating IPs -->
+                <div class="scope-item">
+                    <div class="scope-icon blue">🌍</div>
+                    <div class="scope-details">
+                        <strong>Floating IPs</strong>
+                        <span>
+                            {% if fips_info %}
+                                {% for fip in fips_info %}{{ fip.floating_ip }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            {% else %}
+                                No floating IPs assigned
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="scope-count">{{ fips_info|length }}</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div><!-- /header-card -->
+
+
+    <!-- Warning -->
+    <div class="warning-box" id="warning-box">
+        <div class="warning-box-icon">⚠️</div>
+        <div>
+            <strong>This action is permanent and cannot be undone.</strong>
+            <p>All listed resources will be destroyed. Confirm only if you are sure you want to remove this instance and everything attached to it.</p>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="confirm-actions" id="action-buttons">
+        <a href="{% url 'instance:detail' instance_id %}" class="btn btn-cancel">← Cancel</a>
+        <button class="btn btn-danger" id="start-cleanup-btn" onclick="startCleanup()">
+            🗑 Begin Cleanup
+        </button>
+    </div>
+
+
+    <!-- ── Progress panel (shown after confirm) ──────────── -->
+    <div class="progress-panel" id="progress-panel">
+
+        <div class="progress-panel-head">
+            <h2>🔄 Running Cleanup…</h2>
+            <p id="progress-head-sub">Preparing to remove resources…</p>
+        </div>
+
+        <!-- Overall bar -->
+        <div class="overall-progress-wrap">
+            <div class="overall-label">
+                <span id="overall-label-text">Starting…</span>
+                <span id="overall-pct">0%</span>
+            </div>
+            <div class="overall-track">
+                <div class="overall-fill" id="overall-fill"></div>
+            </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps-list" id="steps-list">
+
+            <!-- Steps are injected by JS -->
+            <div class="step-item active" id="step-scanning">
+                <div class="step-bubble bubble-active" id="step-scanning-bubble">⏳</div>
+                <div class="step-content">
+                    <div class="step-label">Scanning resources…</div>
+                    <div class="step-detail">Identifying volumes, floating IPs, and ports</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Result banner -->
+        <div class="result-banner" id="result-banner">
+            <div class="result-banner-icon" id="result-icon"></div>
+            <div>
+                <strong id="result-title"></strong>
+                <p id="result-body"></p>
+                <div class="result-actions">
+                    <a href="{% url 'instances' %}" class="btn btn-sm btn-danger">← Back to Instances</a>
+                    <a href="{% url 'home' %}" class="btn btn-sm btn-outline">Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /progress-panel -->
+
+</div><!-- /cleanup-page -->
+
+
+<script>
+const INSTANCE_ID   = "{{ instance_id|escapejs }}";
+const CLEANUP_URL   = "{% url 'cleanup' instance_id %}";
+const CSRF_TOKEN    = "{{ csrf_token }}";
+
+/* ──────────────────────────────────────────────────────────
+   STEP ICON MAP
+   ────────────────────────────────────────────────────────── */
+const STEP_ICONS = {
+    "Disassociate floating": "🔗",
+    "Delete instance":       "🖥️",
+    "Delete volume":         "💾",
+    "Release floating":      "🌍",
+    "Scan":                  "🔍",
+};
+
+function iconFor(label) {
+    for (const [key, icon] of Object.entries(STEP_ICONS)) {
+        if (label.startsWith(key)) return icon;
+    }
+    return "⚙️";
+}
+
+/* ──────────────────────────────────────────────────────────
+   HELPERS
+   ────────────────────────────────────────────────────────── */
+function setProgress(pct, label) {
+    document.getElementById("overall-fill").style.width = pct + "%";
+    document.getElementById("overall-pct").textContent  = pct + "%";
+    document.getElementById("overall-label-text").textContent = label;
+}
+
+function setHeadSub(text) {
+    document.getElementById("progress-head-sub").textContent = text;
+}
+
+function now() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+/* ──────────────────────────────────────────────────────────
+   RENDER A STEP ROW (appended to steps-list)
+   ────────────────────────────────────────────────────────── */
+function renderStep(step, idx) {
+    const list = document.getElementById("steps-list");
+
+    const statusClass = {
+        ok:      "done",
+        warning: "warning",
+        error:   "failed",
+    }[step.status] || "done";
+
+    const bubbleClass = {
+        ok:      "bubble-done",
+        warning: "bubble-warning",
+        error:   "bubble-error",
+    }[step.status] || "bubble-done";
+
+    const icon = iconFor(step.label);
+
+    const iconChar = {
+        ok:      "✓",
+        warning: "⚠",
+        error:   "✕",
+    }[step.status] || "✓";
+
+    const el = document.createElement("div");
+    el.className = `step-item ${statusClass}`;
+    el.id = `step-${idx}`;
+    el.style.opacity = "0";
+    el.style.transform = "translateY(8px)";
+    el.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+
+    el.innerHTML = `
+        <div class="step-bubble ${bubbleClass}">${iconChar}</div>
+        <div class="step-content">
+            <div class="step-label">${icon} ${step.label}</div>
+            <div class="step-detail ${step.status}">${step.detail || ""}</div>
+        </div>
+        <div class="step-time">${now()}</div>
+    `;
+
+    list.appendChild(el);
+
+    // Animate in with a small stagger
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            el.style.opacity  = "1";
+            el.style.transform = "translateY(0)";
+        }, idx * 120);
+    });
+}
+
+/* ──────────────────────────────────────────────────────────
+   SHOW RESULT BANNER
+   ────────────────────────────────────────────────────────── */
+function showResult(ok, name, steps) {
+    const banner  = document.getElementById("result-banner");
+    const icon    = document.getElementById("result-icon");
+    const title   = document.getElementById("result-title");
+    const body    = document.getElementById("result-body");
+
+    const errors   = steps.filter(s => s.status === "error").length;
+    const warnings = steps.filter(s => s.status === "warning").length;
+
+    if (ok) {
+        banner.className = "result-banner success";
+        icon.textContent  = "✅";
+        title.textContent = `Cleanup complete for '${name}'`;
+        const parts = [];
+        const okSteps = steps.filter(s => s.status === "ok");
+        parts.push(`${okSteps.length} step${okSteps.length !== 1 ? "s" : ""} completed`);
+        if (warnings) parts.push(`${warnings} warning${warnings !== 1 ? "s" : ""}`);
+        body.textContent = parts.join(" · ");
+    } else {
+        banner.className = "result-banner error";
+        icon.textContent  = "❌";
+        title.textContent = "Cleanup encountered errors";
+        body.textContent  = `${errors} error${errors !== 1 ? "s" : ""} occurred — check step details above.`;
+    }
+
+    banner.style.display = "flex";
+    banner.style.opacity = "0";
+    banner.style.transform = "translateY(10px)";
+    banner.style.transition = "opacity 0.5s, transform 0.5s";
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            banner.style.opacity   = "1";
+            banner.style.transform = "translateY(0)";
+        }, 50);
+    });
+
+    // Update header
+    const head = document.querySelector(".progress-panel-head h2");
+    head.textContent = ok ? "✅ Cleanup Complete" : "⚠️ Cleanup Finished with Issues";
+    document.querySelector(".progress-panel-head").style.background =
+        ok ? "linear-gradient(135deg, #14532d, #15803d)" :
+             "linear-gradient(135deg, #7f1d1d, #991b1b)";
+}
+
+/* ──────────────────────────────────────────────────────────
+   MAIN — kick off cleanup
+   ────────────────────────────────────────────────────────── */
+async function startCleanup() {
+    // Hide confirm UI
+    document.getElementById("confirm-card").style.opacity  = "0.45";
+    document.getElementById("warning-box").style.display   = "none";
+    document.getElementById("action-buttons").style.display = "none";
+
+    // Show progress panel
+    const panel = document.getElementById("progress-panel");
+    panel.style.display = "block";
+    panel.style.opacity = "0";
+    panel.style.transition = "opacity 0.4s";
+    requestAnimationFrame(() => {
+        setTimeout(() => { panel.style.opacity = "1"; }, 30);
+    });
+
+    setProgress(5, "Connecting to OpenStack…");
+    setHeadSub("Sending cleanup request to the server…");
+
+    let data;
+    try {
+        const resp = await fetch(CLEANUP_URL, {
+            method:  "POST",
+            headers: {
+                "X-CSRFToken": CSRF_TOKEN,
+                "Accept":      "application/json",
+            },
+        });
+
+        if (!resp.ok) {
+            throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+        }
+
+        data = await resp.json();
+
+    } catch (err) {
+        // Remove scanning placeholder
+        document.getElementById("step-scanning").remove();
+        setProgress(100, "Request failed");
+        setHeadSub("Could not reach the server.");
+        renderStep({ label: "Network request", status: "error", detail: err.message }, 0);
+        showResult(false, "unknown", [{ status: "error" }]);
+        return;
+    }
+
+    // Remove the initial scanning placeholder
+    const scanEl = document.getElementById("step-scanning");
+    if (scanEl) scanEl.remove();
+
+    const steps = data.steps || [];
+    const total = steps.length;
+
+    setProgress(15, "Processing steps…");
+    setHeadSub(`Running ${total} cleanup operation${total !== 1 ? "s" : ""}…`);
+
+    // Animate each step in with a delay
+    for (let i = 0; i < steps.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 350));
+        renderStep(steps[i], i);
+        const pct = 15 + Math.round((80 * (i + 1)) / Math.max(total, 1));
+        setProgress(pct, `Step ${i + 1} of ${total}`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    setProgress(100, "Done");
+    setHeadSub("All operations completed.");
+
+    const hasErrors = steps.some(s => s.status === "error");
+    showResult(data.ok && !hasErrors, data.name || "instance", steps);
+}
+</script>
+
+{% endblock %}

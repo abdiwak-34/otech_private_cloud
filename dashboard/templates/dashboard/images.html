@@ -1,68 +1,623 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}
-Images
-{% endblock %}
+{% block title %}Images — Glance{% endblock %}
 
 {% block content %}
+<style>
 
-<h1>OpenStack Images</h1>
+/* ============================================================
+   PAGE
+   ============================================================ */
+.images-page {
+    max-width: 1400px;
+    margin: 0 auto;
+}
 
-<p>
-    Images available through Glance.
-</p>
+/* ============================================================
+   HEADER
+   ============================================================ */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+}
 
-<table>
+.page-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
 
-    <thead>
+.page-title-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+}
 
-        <tr>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Visibility</th>
-            <th>ID</th>
-        </tr>
+.page-title-group h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+}
 
-    </thead>
+.page-title-group p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
 
-    <tbody>
+/* ============================================================
+   STAT STRIP
+   ============================================================ */
+.stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+}
 
-        {% for image in images %}
+.stat-chip {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
 
-        <tr>
+.chip-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
 
-            <td>
-                {{ image.name }}
-            </td>
+.chip-icon.violet { background: #f5f3ff; }
+.chip-icon.green  { background: #f0fdf4; }
+.chip-icon.blue   { background: #eff6ff; }
+.chip-icon.amber  { background: #fffbeb; }
 
-            <td>
-                {{ image.status }}
-            </td>
+.chip-body {}
+.chip-number { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1; }
+.chip-label  { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 3px; }
 
-            <td>
-                {{ image.visibility }}
-            </td>
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
 
-            <td>
-                {{ image.id }}
-            </td>
+.search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
 
-        </tr>
+.search-wrap input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    font-size: 13px;
+    background: white;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+}
 
-        {% empty %}
+.search-wrap input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
 
-        <tr>
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #94a3b8;
+    pointer-events: none;
+}
 
-            <td colspan="4">
-                No images found.
-            </td>
+.filter-select {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    font-size: 13px;
+    background: white;
+    color: #374151;
+    outline: none;
+    cursor: pointer;
+    transition: border 0.2s;
+}
 
-        </tr>
+.filter-select:focus { border-color: #2563eb; }
 
-        {% endfor %}
+.count-tag {
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
-    </tbody>
+/* ============================================================
+   TABLE CARD
+   ============================================================ */
+.table-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.05);
+}
 
-</table>
+.tbl-wrap { overflow-x: auto; }
+
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.tbl th {
+    padding: 12px 18px;
+    text-align: left;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.tbl td {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover { background: #fafcff; transition: background 0.15s; }
+
+/* ── Name cell ── */
+.name-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.img-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+}
+
+.img-avatar.linux   { background: #fef3c7; }
+.img-avatar.windows { background: #dbeafe; }
+.img-avatar.other   { background: #f5f3ff; }
+
+.img-name { font-weight: 700; color: #0f172a; font-size: 13px; line-height: 1.3; }
+.img-id   { font-family: monospace; font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+/* ── Status pills ── */
+.s-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.s-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+.sp-active  { background: #dcfce7; color: #166534; }
+.sp-active .dot { background: #22c55e; }
+.sp-other   { background: #fef3c7; color: #92400e; }
+.sp-other .dot  { background: #f59e0b; }
+.sp-error   { background: #fee2e2; color: #b91c1c; }
+.sp-error .dot  { background: #ef4444; }
+
+/* ── Visibility badge ── */
+.vis-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.vis-public   { background: #dcfce7; color: #166534; }
+.vis-private  { background: #f1f5f9; color: #475569; }
+.vis-shared   { background: #dbeafe; color: #1d4ed8; }
+.vis-community{ background: #fef3c7; color: #92400e; }
+
+/* ── Format badge ── */
+.fmt-badge {
+    padding: 3px 7px;
+    border-radius: 5px;
+    background: #f5f3ff;
+    color: #7c3aed;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-family: monospace;
+}
+
+/* ── Size ── */
+.size-value { font-weight: 700; color: #0f172a; }
+.size-unit  { font-size: 10px; color: #94a3b8; margin-left: 2px; }
+
+/* ── Mono ── */
+.mono { font-family: monospace; font-size: 11px; color: #64748b; }
+
+/* ── Requirements ── */
+.req-item {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 10px;
+    color: #475569;
+    margin: 1px 2px 1px 0;
+}
+
+/* ── Empty state ── */
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+}
+.empty-state .ee { font-size: 48px; margin-bottom: 14px; display: block; }
+.empty-state h3  { margin: 0; font-size: 16px; color: #334155; }
+.empty-state p   { margin: 7px 0 0; font-size: 13px; color: #94a3b8; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px) {
+    .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+    .page-header  { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .stat-strip   { grid-template-columns: repeat(2, 1fr); }
+    .filter-bar   { flex-direction: column; align-items: stretch; }
+    .search-wrap  { min-width: unset; }
+}
+
+</style>
+
+
+<div class="images-page">
+
+    <!-- ======================================================
+         PAGE HEADER
+         ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="page-title-group">
+            <div class="page-title-icon">🖼️</div>
+            <div>
+                <h1>Images</h1>
+                <p>Boot images and snapshots available through OpenStack Glance.</p>
+            </div>
+        </div>
+
+        <div id="count-display" class="count-tag">
+            {{ images|length }} image{{ images|length|pluralize }}
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         STAT STRIP
+         ====================================================== -->
+
+    {% with total=images|length %}
+    <div class="stat-strip">
+
+        <div class="stat-chip">
+            <div class="chip-icon violet">🖼️</div>
+            <div class="chip-body">
+                <div class="chip-number">{{ total }}</div>
+                <div class="chip-label">Total Images</div>
+            </div>
+        </div>
+
+        <div class="stat-chip">
+            <div class="chip-icon green">✅</div>
+            <div class="chip-body">
+                <div class="chip-number">
+                    {% with active=0 %}
+                    {% for img in images %}{% if img.status == "active" %}{% with active=active|add:1 %}{% endwith %}{% endif %}{% endfor %}
+                    {{ images|length }}
+                    {% endwith %}
+                </div>
+                <div class="chip-label">Active</div>
+            </div>
+        </div>
+
+        <div class="stat-chip">
+            <div class="chip-icon blue">🌐</div>
+            <div class="chip-body">
+                <div class="chip-number">
+                    {% with pub=0 %}
+                    {% for img in images %}{% if img.visibility == "public" %}{% with pub=pub|add:1 %}{% endwith %}{% endif %}{% endfor %}
+                    {% for img in images %}{% if img.visibility == "public" %}{{ forloop.counter }}{% endif %}{% endfor %}
+                    {% endwith %}
+                    —
+                </div>
+                <div class="chip-label">Public</div>
+            </div>
+        </div>
+
+        <div class="stat-chip">
+            <div class="chip-icon amber">📋</div>
+            <div class="chip-body">
+                <div class="chip-number">
+                    {% for img in images %}{% if img.disk_format %}{% if forloop.first %}{% endif %}{% endif %}{% endfor %}
+                    —
+                </div>
+                <div class="chip-label">Formats</div>
+            </div>
+        </div>
+
+    </div>
+    {% endwith %}
+
+
+    <!-- ======================================================
+         FILTER BAR
+         ====================================================== -->
+
+    <div class="filter-bar">
+
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search images by name, ID, or format…"
+                oninput="filterImages()"
+            >
+        </div>
+
+        <select class="filter-select" id="vis-filter" onchange="filterImages()">
+            <option value="">All visibility</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="shared">Shared</option>
+            <option value="community">Community</option>
+        </select>
+
+        <select class="filter-select" id="status-filter" onchange="filterImages()">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="saving">Saving</option>
+            <option value="queued">Queued</option>
+            <option value="deactivated">Deactivated</option>
+        </select>
+
+    </div>
+
+
+    <!-- ======================================================
+         TABLE
+         ====================================================== -->
+
+    <div class="table-card">
+        <div class="tbl-wrap">
+            <table class="tbl" id="images-table">
+
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Visibility</th>
+                        <th>Format</th>
+                        <th>Size</th>
+                        <th>Min Disk</th>
+                        <th>Min RAM</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+
+                <tbody id="images-tbody">
+
+                    {% for image in images %}
+                    <tr class="img-row"
+                        data-name="{{ image.name|lower }}"
+                        data-id="{{ image.id|lower }}"
+                        data-vis="{{ image.visibility|lower }}"
+                        data-status="{{ image.status|lower }}"
+                        data-fmt="{{ image.disk_format|lower }}">
+
+                        <!-- Name + ID -->
+                        <td>
+                            <div class="name-cell">
+
+                                {% if "ubuntu" in image.name|lower or "debian" in image.name|lower or "centos" in image.name|lower or "fedora" in image.name|lower or "cirros" in image.name|lower %}
+                                    <div class="img-avatar linux">🐧</div>
+                                {% elif "windows" in image.name|lower or "win" in image.name|lower %}
+                                    <div class="img-avatar windows">🪟</div>
+                                {% else %}
+                                    <div class="img-avatar other">💿</div>
+                                {% endif %}
+
+                                <div>
+                                    <div class="img-name">{{ image.name }}</div>
+                                    <div class="img-id">{{ image.id }}</div>
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            {% if image.status == "active" %}
+                                <span class="s-pill sp-active"><span class="dot"></span>Active</span>
+                            {% elif image.status == "error" %}
+                                <span class="s-pill sp-error"><span class="dot"></span>Error</span>
+                            {% else %}
+                                <span class="s-pill sp-other"><span class="dot"></span>{{ image.status|capfirst }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Visibility -->
+                        <td>
+                            {% if image.visibility == "public" %}
+                                <span class="vis-badge vis-public">🌐 Public</span>
+                            {% elif image.visibility == "private" %}
+                                <span class="vis-badge vis-private">🔒 Private</span>
+                            {% elif image.visibility == "shared" %}
+                                <span class="vis-badge vis-shared">🤝 Shared</span>
+                            {% elif image.visibility == "community" %}
+                                <span class="vis-badge vis-community">👥 Community</span>
+                            {% else %}
+                                <span class="vis-badge vis-private">{{ image.visibility }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Format -->
+                        <td>
+                            {% if image.disk_format and image.disk_format != "—" %}
+                                <span class="fmt-badge">{{ image.disk_format }}</span>
+                            {% else %}
+                                <span class="mono">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Size -->
+                        <td>
+                            {% if image.size_mb %}
+                                {% if image.size_mb >= 1024 %}
+                                    <span class="size-value">{{ image.size_mb|floatformat:1 }}</span>
+                                    <span class="size-unit">MB</span>
+                                {% else %}
+                                    <span class="size-value">{{ image.size_mb|floatformat:0 }}</span>
+                                    <span class="size-unit">MB</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="mono">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Min Disk -->
+                        <td>
+                            {% if image.min_disk %}
+                                <span class="req-item">{{ image.min_disk }} GB</span>
+                            {% else %}
+                                <span class="mono">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Min RAM -->
+                        <td>
+                            {% if image.min_ram %}
+                                <span class="req-item">{{ image.min_ram }} MB</span>
+                            {% else %}
+                                <span class="mono">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Created -->
+                        <td>
+                            {% if image.created_at %}
+                                <span style="font-size:12px;color:#475569;">
+                                    {{ image.created_at|slice:":10" }}
+                                </span>
+                            {% else %}
+                                <span class="mono">—</span>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <span class="ee">🖼️</span>
+                                <h3>No images found</h3>
+                                <p>No Glance images are available in this OpenStack project.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- No-results row (inserted by JS) -->
+    <div id="no-results" style="display:none;padding:40px;text-align:center;color:#94a3b8;font-size:14px;">
+        🔍 No images match your search.
+    </div>
+
+</div>
+
+
+<script>
+function filterImages() {
+    const q      = document.getElementById("search-input").value.toLowerCase().trim();
+    const vis    = document.getElementById("vis-filter").value;
+    const status = document.getElementById("status-filter").value;
+
+    const rows   = document.querySelectorAll(".img-row");
+    let visible  = 0;
+
+    rows.forEach(row => {
+        const matchQ  = !q || row.dataset.name.includes(q) || row.dataset.id.includes(q) || row.dataset.fmt.includes(q);
+        const matchV  = !vis    || row.dataset.vis    === vis;
+        const matchS  = !status || row.dataset.status === status;
+
+        if (matchQ && matchV && matchS) {
+            row.style.display = "";
+            visible++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    document.getElementById("count-display").textContent =
+        visible + " image" + (visible !== 1 ? "s" : "");
+
+    document.getElementById("no-results").style.display = visible === 0 ? "block" : "none";
+}
+</script>
 
 {% endblock %}

@@ -101,17 +101,17 @@
 
 <nav class="navbar">
 
-    <a href="/" class="brand">
+    <a href="{% url 'home' %}" class="brand">
         ☁ OpenStack Dashboard
     </a>
 
     <div class="nav-links">
 
-        <a href="/">Dashboard</a>
-        <a href="/instances/">Instances</a>
-        <a href="/images/">Images</a>
-        <a href="/networks/">Networks</a>
-        <a href="/networks/routers/">Routers</a>
+        <a href="{% url 'home' %}">Dashboard</a>
+        <a href="{% url 'instances' %}">Instances</a>
+        <a href="{% url 'images' %}">Images</a>
+        <a href="{% url 'network:list' %}">Networks</a>
+        <a href="{% url 'network:router_list' %}">Routers</a>
 
     </div>
 
