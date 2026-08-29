@@ -1,4 +1,5 @@
 import json
+import time
 import openstack
 
 from django.http import JsonResponse, StreamingHttpResponse
@@ -302,7 +303,15 @@ def cleanup_instance(request, instance_id):
             # ── Step 2: Delete instance ───────────────────
             try:
                 conn2.compute.delete_server(instance_id, ignore_missing=True)
-                conn2.compute.wait_for_delete(server)
+                # Poll until the server is gone (max ~3 min)
+                for _ in range(36):
+                    try:
+                        s = conn2.compute.get_server(instance_id)
+                        if s is None:
+                            break
+                    except Exception:
+                        break
+                    time.sleep(5)
                 yield send("step", {
                     "label":  f"Delete instance '{instance_name}'",
                     "status": "ok",
@@ -323,7 +332,15 @@ def cleanup_instance(request, instance_id):
                         vname = vol.name or vid
                         vsize = vol.size
                         conn2.block_storage.delete_volume(vid, ignore_missing=True)
-                        conn2.block_storage.wait_for_delete(vol)
+                        # Wait for volume deletion
+                        for _ in range(24):
+                            try:
+                                v = conn2.block_storage.get_volume(vid)
+                                if v is None:
+                                    break
+                            except Exception:
+                                break
+                            time.sleep(5)
                         yield send("step", {
                             "label":  f"Delete volume '{vname}'",
                             "status": "ok",

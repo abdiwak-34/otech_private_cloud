@@ -5,19 +5,15 @@ app_name = "network"
 
 urlpatterns = [
 
-    # ---- Networks ----
-    path("",               views.network_list,   name="list"),
-    path("create/",        views.create_network, name="create"),
-    path("<str:network_id>/",        views.network_detail, name="detail"),
-    path("<str:network_id>/delete/", views.delete_network, name="delete"),
+    # ---- Network list + create (no capture groups — must come first) ----
+    path("",        views.network_list,   name="list"),
+    path("create/", views.create_network, name="create"),
 
-    # ---- Routers ----
-    path("routers/",                         views.router_list,   name="router_list"),
-    path("routers/create/",                  views.create_router, name="router_create"),
-    path("routers/<str:router_id>/",         views.router_detail, name="router_detail"),
-    path("routers/<str:router_id>/delete/",  views.delete_router, name="router_delete"),
-
-    # ---- Router interfaces ----
+    # ---- Routers (must be before <str:network_id> catch-all) ----
+    path("routers/",                        views.router_list,   name="router_list"),
+    path("routers/create/",                 views.create_router, name="router_create"),
+    path("routers/<str:router_id>/",        views.router_detail, name="router_detail"),
+    path("routers/<str:router_id>/delete/", views.delete_router, name="router_delete"),
     path(
         "routers/<str:router_id>/add-interface/",
         views.add_router_interface,
@@ -33,4 +29,8 @@ urlpatterns = [
         views.set_router_gateway,
         name="router_set_gateway",
     ),
+
+    # ---- Network detail + delete (catch-all — must come last) ----
+    path("<str:network_id>/",        views.network_detail, name="detail"),
+    path("<str:network_id>/delete/", views.delete_network, name="delete"),
 ]

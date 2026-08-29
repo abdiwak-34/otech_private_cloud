@@ -258,7 +258,9 @@
     {% if messages %}
         <div class="messages">
             {% for message in messages %}
-                <div class="message {{ message.tags }}">{{ message }}</div>
+                <div class="message {{ message.tags }}">
+                    {% if message.tags == "error" %}⚠ {% elif message.tags == "success" %}✓ {% endif %}{{ message }}
+                </div>
             {% endfor %}
         </div>
     {% endif %}
@@ -308,9 +310,16 @@
                 <span class="info-label">External Gateway</span>
                 <span class="info-value">
                     {% if router.gw_network_id %}
-                        <span class="mono">{{ router.gw_network_id|truncatechars:20 }}</span>
+                        {% for net in external_networks %}
+                            {% if net.id == router.gw_network_id %}
+                                {{ net.name }}
+                            {% endif %}
+                        {% endfor %}
+                        {% if not external_networks %}
+                            <span class="mono">{{ router.gw_network_id|truncatechars:16 }}</span>
+                        {% endif %}
                     {% else %}
-                        None
+                        <span style="color:#94a3b8;">None</span>
                     {% endif %}
                 </span>
             </div>
