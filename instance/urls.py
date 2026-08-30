@@ -1,37 +1,36 @@
 from django.urls import path
 from . import views
 
-# The app_name creates a namespace so we can use {% url 'instance:detail' %}
-# in templates without clashing with other apps.
 app_name = "instance"
 
 # IMPORTANT: Django matches URLs top to bottom.
-# The catch-all path("<str:instance_id>/") must come LAST,
-# otherwise it would swallow all the more specific paths below it.
+# The catch-all path("<str:instance_id>/") must come LAST.
 
 urlpatterns = [
 
-    # Create a new instance — form page
-    path("new/", views.create_instance, name="create"),
+    # --- Instance CRUD ---
+    path("new/",                          views.create_instance, name="create"),
+    path("<str:instance_id>/delete/",     views.delete_instance, name="delete"),
+    path("<str:instance_id>/",            views.instance_detail, name="detail"),
 
-    # Delete an instance — shows a confirmation page first
-    path("<str:instance_id>/delete/", views.delete_instance, name="delete"),
-
-    # Assign a public floating IP to an instance
+    # --- Floating IP ---
     path("<str:instance_id>/floating-ip/", views.assign_floating_ip, name="assign_floating_ip"),
 
-    # Create a new Cinder volume (optionally auto-attach it)
-    path("<str:instance_id>/volume/create/", views.create_volume, name="create_volume"),
+    # --- Volume management ---
+    path("<str:instance_id>/volume/create/",                        views.create_volume,  name="create_volume"),
+    path("<str:instance_id>/volume/<str:volume_id>/attach/",        views.attach_volume,  name="attach_volume"),
+    path("<str:instance_id>/volume/<str:volume_id>/detach/",        views.detach_volume,  name="detach_volume"),
+    path("<str:instance_id>/volume/<str:volume_id>/delete/",        views.delete_volume,  name="delete_volume"),
 
-    # Attach an existing volume to this instance
-    path("<str:instance_id>/volume/<str:volume_id>/attach/", views.attach_volume, name="attach_volume"),
+    # --- Security groups on an instance (add / remove) ---
+    path("<str:instance_id>/security-groups/add/",    views.add_instance_security_group,    name="sg_add"),
+    path("<str:instance_id>/security-groups/remove/", views.remove_instance_security_group, name="sg_remove"),
 
-    # Detach a volume from this instance
-    path("<str:instance_id>/volume/<str:volume_id>/detach/", views.detach_volume, name="detach_volume"),
-
-    # Delete a volume permanently
-    path("<str:instance_id>/volume/<str:volume_id>/delete/", views.delete_volume, name="delete_volume"),
-
-    # Instance detail page — must be last because it matches any UUID
-    path("<str:instance_id>/", views.instance_detail, name="detail"),
+    # --- Security group management (independent of any instance) ---
+    path("security-groups/",                                    views.security_group_list,   name="security_group_list"),
+    path("security-groups/create/",                             views.create_security_group, name="security_group_create"),
+    path("security-groups/<str:sg_id>/",                        views.security_group_detail, name="security_group_detail"),
+    path("security-groups/<str:sg_id>/delete/",                 views.delete_security_group, name="security_group_delete"),
+    path("security-groups/<str:sg_id>/rules/add/",              views.add_security_group_rule,    name="sg_rule_add"),
+    path("security-groups/<str:sg_id>/rules/<str:rule_id>/delete/", views.delete_security_group_rule, name="sg_rule_delete"),
 ]

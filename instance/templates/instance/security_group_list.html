@@ -1,0 +1,219 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Security Groups{% endblock %}
+
+{% block content %}
+<style>
+.page { max-width: 1200px; margin: 0 auto; }
+
+.page-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 26px;
+}
+.page-header h1 { margin: 0; font-size: 26px; font-weight: 800; color: #0f172a; }
+.page-header p  { margin: 5px 0 0; font-size: 14px; color: #64748b; }
+
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
+    text-decoration: none; border: 1px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-danger  { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+.btn-danger:hover { background: #ffe4e6; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
+
+.msg { padding: 12px 16px; border-radius: 9px; margin-bottom: 14px; font-size: 13px; font-weight: 500; }
+.msg.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.msg.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+.msg.warning { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+
+/* Group cards */
+.group-card {
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 14px; margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+
+.group-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.group-title {
+    display: flex; align-items: center; gap: 11px;
+}
+
+.group-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: #fef3c7;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+}
+
+.group-title h2 { margin: 0; font-size: 15px; color: #0f172a; font-weight: 700; }
+.group-title p  { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+
+.group-actions { display: flex; gap: 8px; }
+
+/* Rules table */
+.rules-table {
+    width: 100%; border-collapse: collapse;
+}
+.rules-table th {
+    padding: 10px 18px; text-align: left;
+    background: #fafcff; color: #64748b;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid #f1f5f9;
+}
+.rules-table td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 13px; color: #334155;
+    vertical-align: middle;
+}
+.rules-table tr:last-child td { border-bottom: none; }
+.rules-table tr:hover { background: #fafcff; }
+
+.dir-badge {
+    display: inline-block; padding: 3px 8px;
+    border-radius: 5px; font-size: 10px; font-weight: 700;
+}
+.dir-ingress { background: #dbeafe; color: #1d4ed8; }
+.dir-egress  { background: #f5f3ff; color: #7c3aed; }
+
+.proto-badge {
+    display: inline-block; padding: 3px 7px;
+    border-radius: 5px; font-size: 10px; font-weight: 700;
+    background: #f1f5f9; color: #475569;
+    font-family: monospace;
+}
+
+.mono { font-family: monospace; font-size: 12px; color: #475569; }
+
+.empty-rules {
+    padding: 30px 20px; text-align: center;
+    font-size: 13px; color: #94a3b8;
+}
+
+/* Empty page state */
+.empty-page {
+    text-align: center; padding: 60px 20px;
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 14px;
+}
+.empty-page .ei { font-size: 48px; display: block; margin-bottom: 14px; }
+.empty-page h2  { margin: 0; color: #334155; font-size: 18px; }
+.empty-page p   { margin: 8px 0 20px; color: #94a3b8; font-size: 14px; }
+</style>
+
+<div class="page">
+
+    <div class="page-header">
+        <div>
+            <h1>🔒 Security Groups</h1>
+            <p>Control which network traffic is allowed in and out of your instances.</p>
+        </div>
+        <a href="{% url 'instance:security_group_create' %}" class="btn btn-primary">
+            ＋ Create Security Group
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if groups %}
+
+        {% for group in groups %}
+        <div class="group-card">
+
+            <div class="group-head">
+                <div class="group-title">
+                    <div class="group-icon">🔒</div>
+                    <div>
+                        <h2>{{ group.name }}</h2>
+                        <p>{{ group.description|default:"No description" }} &nbsp;·&nbsp; {{ group.rules|length }} rule{{ group.rules|length|pluralize }}</p>
+                    </div>
+                </div>
+                <div class="group-actions">
+                    <a href="{% url 'instance:security_group_detail' group.id %}" class="btn btn-secondary btn-sm">
+                        ＋ Add Rule
+                    </a>
+                    <form method="POST" action="{% url 'instance:security_group_delete' group.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Delete security group \'{{ group.name }}\'?');">
+                            🗑 Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if group.rules %}
+            <table class="rules-table">
+                <thead>
+                    <tr>
+                        <th>Direction</th>
+                        <th>Protocol</th>
+                        <th>Port Range</th>
+                        <th>Remote IP</th>
+                        <th>IP Version</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in group.rules %}
+                    <tr>
+                        <td>
+                            {% if rule.direction == "ingress" %}
+                                <span class="dir-badge dir-ingress">↓ Ingress</span>
+                            {% else %}
+                                <span class="dir-badge dir-egress">↑ Egress</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="proto-badge">{{ rule.protocol|upper }}</span></td>
+                        <td>
+                            {% if rule.port_min and rule.port_max %}
+                                <span class="mono">{{ rule.port_min }}–{{ rule.port_max }}</span>
+                            {% elif rule.port_min %}
+                                <span class="mono">{{ rule.port_min }}</span>
+                            {% else %}
+                                <span style="color:#94a3b8;">All ports</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="mono">{{ rule.remote_ip }}</span></td>
+                        <td><span style="font-size:12px;color:#64748b;">{{ rule.ethertype }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-rules">No rules yet — click "Add Rule" to allow traffic.</div>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+    {% else %}
+    <div class="empty-page">
+        <span class="ei">🔒</span>
+        <h2>No security groups</h2>
+        <p>Security groups control the network traffic allowed to and from your instances.</p>
+        <a href="{% url 'instance:security_group_create' %}" class="btn btn-primary">
+            ＋ Create your first security group
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

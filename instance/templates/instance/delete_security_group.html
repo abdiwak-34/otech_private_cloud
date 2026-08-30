@@ -1,0 +1,56 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Delete Security Group{% endblock %}
+
+{% block content %}
+<style>
+.del-page { max-width: 520px; margin: 40px auto; padding: 0 15px; }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; margin-bottom: 20px; }
+.breadcrumb a { color: #2563eb; text-decoration: none; }
+.del-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 36px; text-align: center; box-shadow: 0 6px 20px rgba(15,23,42,0.07); }
+.warn-icon { width: 60px; height: 60px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; border: 6px solid #fef2f2; margin: 0 auto 18px; }
+.del-card h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; }
+.del-card p  { margin: 8px 0 22px; color: #64748b; font-size: 14px; }
+.item-box { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 9px; background: #f8fafc; text-align: left; margin-bottom: 18px; }
+.item-box-icon { width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.item-box strong { display: block; font-size: 14px; color: #0f172a; }
+.item-box small  { font-family: monospace; font-size: 11px; color: #64748b; }
+.warn-box { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid #fed7aa; border-radius: 9px; background: #fff7ed; color: #9a3412; text-align: left; margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
+.actions { display: flex; justify-content: center; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
+.btn-ghost  { background: white; color: #374151; border-color: #d1d5db; }
+.btn-ghost:hover { background: #f9fafb; }
+.btn-danger { background: #dc2626; color: white; }
+.btn-danger:hover { background: #b91c1c; }
+@media (max-width: 500px) { .actions { flex-direction: column-reverse; } .btn { width: 100%; justify-content: center; } }
+</style>
+
+<div class="del-page">
+    <div class="breadcrumb">
+        <a href="{% url 'instance:security_group_list' %}">Security Groups</a>
+        <span>/</span>
+        <span>Delete</span>
+    </div>
+    <div class="del-card">
+        <div class="warn-icon">!</div>
+        <h1>Delete Security Group?</h1>
+        <p>This will permanently remove the group and all its rules.</p>
+        <div class="item-box">
+            <div class="item-box-icon">🔒</div>
+            <div>
+                <strong>{{ sg_name }}</strong>
+                <small>{{ sg_id }}</small>
+            </div>
+        </div>
+        <div class="warn-box">
+            ⚠️ &nbsp;If any instance is still using this group, the deletion will fail. Remove the group from all instances first.
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="actions">
+                <a href="{% url 'instance:security_group_list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-danger">🗑 Yes, Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

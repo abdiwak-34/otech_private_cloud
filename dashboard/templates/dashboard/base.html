@@ -279,8 +279,13 @@
         </a>
 
         <a href="{% url 'instances' %}"
-           {% if '/instances/' in request.path and 'networks' not in request.path %}class="active"{% endif %}>
+           {% if '/instances/' in request.path and 'networks' not in request.path and 'security' not in request.path %}class="active"{% endif %}>
             <span class="ni">🖥️</span> Instances
+        </a>
+
+        <a href="{% url 'instance:security_group_list' %}"
+           {% if 'security-groups' in request.path %}class="active"{% endif %}>
+            <span class="ni">🔒</span> Security Groups
         </a>
 
         <a href="{% url 'images' %}"

@@ -1,0 +1,262 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ group.name }} — Security Group{% endblock %}
+
+{% block content %}
+<style>
+.page { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26px; }
+.header-left { display: flex; align-items: center; gap: 13px; }
+.back-btn { width: 38px; height: 38px; border-radius: 8px; background: #f1f5f9; color: #334155; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 17px; transition: all 0.2s; }
+.back-btn:hover { background: #e2e8f0; transform: translateX(-2px); }
+.page-header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; }
+.page-header p  { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
+.btn-danger  { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+.btn-danger:hover { background: #ffe4e6; }
+.btn-sm { padding: 5px 9px; font-size: 11px; }
+
+.msg { padding: 12px 16px; border-radius: 9px; margin-bottom: 14px; font-size: 13px; font-weight: 500; }
+.msg.error   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.msg.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+.msg.warning { background: #fffbeb; border: 1px solid #fde68a; color: #b45309; }
+
+/* Hero card */
+.hero-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px 22px; margin-bottom: 22px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); display: flex; align-items: center; gap: 14px; }
+.hero-icon { width: 48px; height: 48px; border-radius: 11px; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.hero-card h2 { margin: 0; font-size: 18px; color: #0f172a; }
+.hero-card p  { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+.mono-id { font-family: monospace; font-size: 11px; color: #94a3b8; margin-top: 2px; display: block; }
+
+/* Panel */
+.panel { background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 22px; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+.panel-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.panel-title { display: flex; align-items: center; gap: 10px; }
+.ph-icon { width: 34px; height: 34px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.panel-title h2 { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; }
+.panel-title p  { margin: 2px 0 0; font-size: 11px; color: #94a3b8; }
+
+/* Rules table */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { padding: 10px 18px; text-align: left; background: #fafcff; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f1f5f9; }
+.tbl td { padding: 13px 18px; border-bottom: 1px solid #f8fafc; font-size: 13px; color: #334155; vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover { background: #fafcff; }
+
+.dir-badge { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; }
+.dir-ingress { background: #dbeafe; color: #1d4ed8; }
+.dir-egress  { background: #f5f3ff; color: #7c3aed; }
+.proto-badge { display: inline-block; padding: 3px 7px; border-radius: 5px; font-size: 10px; font-weight: 700; background: #f1f5f9; color: #475569; font-family: monospace; }
+.mono { font-family: monospace; font-size: 12px; color: #475569; }
+
+.empty-state { padding: 40px 20px; text-align: center; }
+.empty-state .ee { font-size: 36px; display: block; margin-bottom: 12px; }
+.empty-state h3 { margin: 0; font-size: 15px; color: #334155; }
+.empty-state p  { margin: 6px 0 0; font-size: 13px; color: #94a3b8; }
+
+/* Add rule form */
+.add-rule-form { padding: 18px 20px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+.add-rule-form h3 { margin: 0 0 14px; font-size: 13px; font-weight: 700; color: #374151; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; align-items: end; }
+.fg { }
+.fg label { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+.fg input, .fg select {
+    width: 100%; box-sizing: border-box; padding: 9px 11px;
+    border: 1px solid #d1d5db; border-radius: 7px;
+    font-size: 13px; background: white; outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.fg input:focus, .fg select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+/* Quick-fill buttons */
+.quick-fill { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.qf-btn {
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+    background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0;
+    cursor: pointer; transition: all 0.15s;
+}
+.qf-btn:hover { background: #e2e8f0; }
+
+.submit-row { margin-top: 12px; display: flex; justify-content: flex-end; }
+.btn-add { background: #2563eb; color: white; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-add:hover { background: #1d4ed8; }
+</style>
+
+<div class="page">
+
+    <div class="page-header">
+        <div class="header-left">
+            <a href="{% url 'instance:security_group_list' %}" class="back-btn">←</a>
+            <div>
+                <h1>{{ group.name }}</h1>
+                <p>Manage rules for this security group</p>
+            </div>
+        </div>
+        <form method="POST" action="{% url 'instance:security_group_delete' group.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Delete this security group? This cannot be undone.');">
+                🗑 Delete Group
+            </button>
+        </form>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Group info -->
+    <div class="hero-card">
+        <div class="hero-icon">🔒</div>
+        <div>
+            <h2>{{ group.name }}</h2>
+            <p>{{ group.description|default:"No description" }}</p>
+            <span class="mono-id">{{ group.id }}</span>
+        </div>
+    </div>
+
+    <!-- Rules panel -->
+    <div class="panel">
+
+        <div class="panel-head">
+            <div class="panel-title">
+                <div class="ph-icon">📋</div>
+                <div>
+                    <h2>Rules</h2>
+                    <p>{{ group.rules|length }} rule{{ group.rules|length|pluralize }} defined</p>
+                </div>
+            </div>
+        </div>
+
+        {% if group.rules %}
+        <table class="tbl">
+            <thead>
+                <tr>
+                    <th>Direction</th>
+                    <th>Protocol</th>
+                    <th>Port Range</th>
+                    <th>Remote IP</th>
+                    <th>IP Version</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in group.rules %}
+                <tr>
+                    <td>
+                        {% if rule.direction == "ingress" %}
+                            <span class="dir-badge dir-ingress">↓ Ingress</span>
+                        {% else %}
+                            <span class="dir-badge dir-egress">↑ Egress</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="proto-badge">{{ rule.protocol|upper }}</span></td>
+                    <td>
+                        {% if rule.port_min and rule.port_max %}
+                            <span class="mono">{{ rule.port_min }}{% if rule.port_min != rule.port_max %}–{{ rule.port_max }}{% endif %}</span>
+                        {% else %}
+                            <span style="color:#94a3b8;font-size:12px;">All ports</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="mono">{{ rule.remote_ip }}</span></td>
+                    <td><span style="font-size:11px;color:#64748b;">{{ rule.ethertype }}</span></td>
+                    <td>
+                        <form method="POST" action="{% url 'instance:sg_rule_delete' group.id rule.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Remove this rule?');">
+                                ✕
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <span class="ee">📋</span>
+            <h3>No rules yet</h3>
+            <p>Add a rule below to allow specific traffic.</p>
+        </div>
+        {% endif %}
+
+        <!-- Add rule form -->
+        <div class="add-rule-form">
+            <h3>Add a Rule</h3>
+
+            <!-- Quick-fill common rules -->
+            <div class="quick-fill">
+                <button class="qf-btn" onclick="fillRule('ingress','tcp',22,22,'0.0.0.0/0')">SSH (22)</button>
+                <button class="qf-btn" onclick="fillRule('ingress','tcp',80,80,'0.0.0.0/0')">HTTP (80)</button>
+                <button class="qf-btn" onclick="fillRule('ingress','tcp',443,443,'0.0.0.0/0')">HTTPS (443)</button>
+                <button class="qf-btn" onclick="fillRule('ingress','tcp',3306,3306,'0.0.0.0/0')">MySQL (3306)</button>
+                <button class="qf-btn" onclick="fillRule('ingress','tcp',5432,5432,'0.0.0.0/0')">PostgreSQL (5432)</button>
+                <button class="qf-btn" onclick="fillRule('ingress','icmp','','','0.0.0.0/0')">Ping (ICMP)</button>
+                <button class="qf-btn" onclick="fillRule('egress','','','','0.0.0.0/0')">All Egress</button>
+            </div>
+
+            <form method="POST" action="{% url 'instance:sg_rule_add' group.id %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="fg">
+                        <label>Direction</label>
+                        <select name="direction" id="r-direction">
+                            <option value="ingress">↓ Ingress</option>
+                            <option value="egress">↑ Egress</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label>Protocol</label>
+                        <select name="protocol" id="r-protocol">
+                            <option value="">Any</option>
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                            <option value="icmp">ICMP</option>
+                        </select>
+                    </div>
+                    <div class="fg">
+                        <label>Port Min</label>
+                        <input type="number" name="port_min" id="r-port-min" min="1" max="65535" placeholder="e.g. 80">
+                    </div>
+                    <div class="fg">
+                        <label>Port Max</label>
+                        <input type="number" name="port_max" id="r-port-max" min="1" max="65535" placeholder="e.g. 80">
+                    </div>
+                    <div class="fg">
+                        <label>Remote IP</label>
+                        <input type="text" name="remote_ip" id="r-remote-ip" value="0.0.0.0/0" placeholder="0.0.0.0/0">
+                    </div>
+                    <div class="fg">
+                        <label>IP Version</label>
+                        <select name="ethertype" id="r-ethertype">
+                            <option value="IPv4">IPv4</option>
+                            <option value="IPv6">IPv6</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="submit-row">
+                    <button type="submit" class="btn-add">＋ Add Rule</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+// Quick-fill helper — fills the form with common rule presets
+function fillRule(direction, protocol, portMin, portMax, remoteIp) {
+    document.getElementById("r-direction").value  = direction;
+    document.getElementById("r-protocol").value   = protocol;
+    document.getElementById("r-port-min").value   = portMin;
+    document.getElementById("r-port-max").value   = portMax;
+    document.getElementById("r-remote-ip").value  = remoteIp;
+}
+</script>
+
+{% endblock %}

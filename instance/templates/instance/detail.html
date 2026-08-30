@@ -1761,6 +1761,87 @@
 
 
     <!-- =====================================================
+         SECURITY GROUPS
+         ===================================================== -->
+
+    <div class="section">
+
+        <div class="section-header">
+
+            <div class="section-heading">
+                <div class="section-icon">🔒</div>
+                <div>
+                    <h2>Security Groups</h2>
+                    <p>Firewall rules applied to this instance.</p>
+                </div>
+            </div>
+
+            <a href="{% url 'instance:security_group_list' %}" class="button secondary-button" style="font-size:12px;">
+                Manage All Groups →
+            </a>
+
+        </div>
+
+        <div style="padding:20px 22px;">
+
+            <!-- Currently assigned groups -->
+            {% if assigned_sgs %}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
+                {% for sg in assigned_sgs %}
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;">
+                    <span style="font-size:14px;">🔒</span>
+                    <span style="font-size:13px;font-weight:700;color:#92400e;">{{ sg.name }}</span>
+                    <form method="POST" action="{% url 'instance:sg_remove' instance.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="sg_name" value="{{ sg.name }}">
+                        <button type="submit"
+                                style="background:none;border:none;cursor:pointer;font-size:13px;color:#b45309;padding:0 0 0 4px;"
+                                onclick="return confirm('Remove security group \'{{ sg.name }}\' from this instance?');">
+                            ✕
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#94a3b8;font-size:13px;margin:0 0 16px;">No security groups assigned to this instance.</p>
+            {% endif %}
+
+            <!-- Add a security group -->
+            {% if available_sgs %}
+            <form method="POST" action="{% url 'instance:sg_add' instance.id %}"
+                  style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                {% csrf_token %}
+                <select name="sg_name"
+                        style="padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:white;outline:none;min-width:220px;">
+                    <option value="">— Select a security group —</option>
+                    {% for sg in available_sgs %}
+                    <option value="{{ sg.name }}">{{ sg.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="button primary-button" style="padding:9px 16px;font-size:13px;">
+                    ＋ Add Group
+                </button>
+                <a href="{% url 'instance:security_group_create' %}"
+                   style="font-size:12px;color:#2563eb;text-decoration:none;">
+                    Create new group →
+                </a>
+            </form>
+            {% else %}
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:13px;color:#64748b;">All available security groups are already assigned.</span>
+                <a href="{% url 'instance:security_group_create' %}" class="button primary-button" style="padding:7px 13px;font-size:12px;">
+                    ＋ Create New Group
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
          INSTANCE INFORMATION
          ===================================================== -->
 

@@ -43,8 +43,13 @@
     cursor: pointer; transition: all 0.2s;
 }
 .btn:hover { transform: translateY(-1px); }
+.btn-primary   { background: #2563eb; color: white; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; }
 .btn-danger    { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
 .btn-danger:hover { background: #ffe4e6; }
+.btn-sm { padding: 6px 11px; font-size: 12px; }
 
 /* Messages */
 .messages { margin-bottom: 18px; }
@@ -353,7 +358,10 @@
                             <div class="empty-row">
                                 <div class="ei">📋</div>
                                 <h3>No subnets</h3>
-                                <p>This network has no subnets configured.</p>
+                                <p>This network has no subnets yet. Add one to make it usable.</p>
+                                <a href="{% url 'network:create_subnet' network.id %}" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                                    ＋ Add Subnet
+                                </a>
                             </div>
                         </td>
                     </tr>
